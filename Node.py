@@ -14,7 +14,7 @@ class Node:
         return self.cost + self.distance
 
     def __str__(self) -> str:
-        return f"[id: {self.node_id}, Cost: {self.cost}]"
+        return f"[id: {self.node_id}, Cost: {self.cost}, Distance: {self.distance}]"
 
     def __lt__(self, other):
         return self.__get_total_cost__() < other.__get_total_cost__()

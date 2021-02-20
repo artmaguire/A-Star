@@ -3,7 +3,6 @@ import psycopg2
 from config import conf
 from Node import Node
 
-
 def open_connection():
     global conn, cur
     conn = psycopg2.connect(dbname=conf.DBNAME, user=conf.DBUSER, password=conf.DBPASSWORD, host=conf.DBHOST,
@@ -36,6 +35,17 @@ def get_ways(source: Node, visited_nodes):
         if node_id in visited_nodes:
             continue
 
-        nodes.append(Node(node_id, (source.cost + way[2]), lat, lng, 0, source))
+        nodes.append(Node(node_id, (source.cost + way[2]), lat, lng, get_distance(node_id, 496), source))
 
     return nodes
+
+
+def get_distance(node_id, target_id):
+    query = """select st_distance(ST_TRANSFORM((SELECT the_geom FROM ways WHERE ways.target = %s OR ways.source = %s LIMIT 1), 4351), ST_TRANSFORM((SELECT the_geom FROM ways WHERE ways.target = %s OR ways.source = %s LIMIT 1), 4351), true)"""
+
+    cur.execute(query, (node_id, node_id, target_id, target_id))
+    distances = cur.fetchall()
+
+    distance = float(distances[0][0])
+
+    return distance / 1000
