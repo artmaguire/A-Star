@@ -15,10 +15,11 @@ def close_connection():
     conn.close()
 
 
-def get_ways(source: Node, visited_nodes):
-    query = """SELECT source, target, cost, x1, y1, x2, y2 FROM ways WHERE ways.target = %s OR ways.source = %s"""
+def get_ways(source: Node, tag_tuple: str, closed_set):
+    query = """SELECT source, target, cost_s, x1, y1, x2, y2, one_way FROM ways WHERE (ways.target = %s OR ways.source = %s) AND 
+        ways.tag_id in %s"""
 
-    cur.execute(query, (source.node_id, source.node_id))
+    cur.execute(query, (source.node_id, source.node_id, tag_tuple))
     ways = cur.fetchall()
 
     nodes = []
@@ -29,13 +30,21 @@ def get_ways(source: Node, visited_nodes):
         else:
             node_id, lat, lng = way[0], way[3], way[4]
 
+        # Ensure we don't go straight back to the node we came from
         if source.previous is not None and node_id == source.previous.node_id:
             continue
 
-        if node_id in visited_nodes:
+        # Already been the this node by a lower cost route
+        if node_id in closed_set:
             continue
 
-        nodes.append(Node(node_id, (source.cost + way[2]), lat, lng, get_distance(node_id, 496), source))
+        # Check if one_way road and we are going in the right direction
+        # We do this by checking if we are at the source (start) of the one way road, and not the target (end)
+        # Also works for roundabouts
+        if way[7] == 1 and source.node_id != way[0]:
+            continue
+
+        nodes.append(Node(node_id, source.cost + way[2], lat, lng, 0, source))
 
     return nodes
 

@@ -7,9 +7,6 @@ class Node:
         self.distance = distance
         self.previous = previous
 
-    def get_neighbouring_nodes(self):
-        print("Hello my name is " + self.node_id)
-
     def __get_total_cost__(self):
         return self.cost + self.distance
 
