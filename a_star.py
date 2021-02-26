@@ -1,5 +1,5 @@
 from Node import Node
-from pg_helper import open_connection, close_connection, get_ways
+from pg_helper import open_connection, close_connection, get_node, get_ways
 import PriorityQueue as pq
 import logging
 
@@ -10,25 +10,24 @@ logger = logging.getLogger(__name__.split(".")[0])
 open_connection()
 
 
-def a_star(source, target):
-    best_node = Node(source, 0, 0, 0, 0, None)
+def a_star(source_id, target_id):
+    best_node = get_node(source_id)
+    target_node = get_node(target_id)
 
-    visited_nodes = [source]
-    closed_set = []
+    closed_set = [source_id]
 
     tag_tuple = get_tag_tuple('car')
 
     while True:
-        nodes = get_ways(best_node, tag_tuple, closed_set)
+        nodes = get_ways(best_node, tag_tuple, closed_set, target_node)
         pq.push_many(nodes)
-        # visited_nodes.extend([n.node_id for n in nodes])
 
         best_node = pq.pop()
         logger.debug(best_node.__str__())
 
         closed_set.append(best_node.node_id)
 
-        if best_node.node_id == target:
+        if best_node.node_id == target_id:
             break
 
     route = []

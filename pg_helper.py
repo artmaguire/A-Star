@@ -1,7 +1,8 @@
 import psycopg2
-
+from math import sin, cos, sqrt, atan2, radians
 from config import conf
 from Node import Node
+
 
 def open_connection():
     global conn, cur
@@ -15,9 +16,18 @@ def close_connection():
     conn.close()
 
 
-def get_ways(source: Node, tag_tuple: str, closed_set):
-    query = """SELECT source, target, cost_s, x1, y1, x2, y2, one_way FROM ways WHERE (ways.target = %s OR ways.source = %s) AND 
-        ways.tag_id in %s"""
+def get_node(node_id):
+    query = """SELECT * FROM nz_ways_vertices_pgr WHERE id = %s;"""
+
+    cur.execute(query, (node_id,))
+    node_tuple = cur.fetchall()
+
+    return Node(node_id, 0, node_tuple[0][3], node_tuple[0][4], 0, None)
+
+
+def get_ways(source: Node, tag_tuple: str, closed_set, target: Node):
+    query = """SELECT source, target, cost_s, x1, y1, x2, y2, one_way FROM nz_ways WHERE (target = %s OR source = %s) AND 
+        tag_id in %s"""
 
     cur.execute(query, (source.node_id, source.node_id, tag_tuple))
     ways = cur.fetchall()
@@ -44,17 +54,26 @@ def get_ways(source: Node, tag_tuple: str, closed_set):
         if way[7] == 1 and source.node_id != way[0]:
             continue
 
-        nodes.append(Node(node_id, source.cost + way[2], lat, lng, 0, source))
+        nodes.append(
+                Node(node_id, source.cost + way[2], lat, lng, get_distance(lat, lng, target), source))
 
     return nodes
 
 
-def get_distance(node_id, target_id):
-    query = """select st_distance(ST_TRANSFORM((SELECT the_geom FROM ways WHERE ways.target = %s OR ways.source = %s LIMIT 1), 4351), ST_TRANSFORM((SELECT the_geom FROM ways WHERE ways.target = %s OR ways.source = %s LIMIT 1), 4351), true)"""
+def get_distance(lat, lng, target):
+    # approximate radius of earth in km
+    R = 6378.0
 
-    cur.execute(query, (node_id, node_id, target_id, target_id))
-    distances = cur.fetchall()
+    source_lat, source_lng = radians(lat), radians(lng)
+    target_lat, target_lng = radians(target.lat), radians(target.lng)
 
-    distance = float(distances[0][0])
+    diff_lat = target_lat - source_lat
+    diff_lng = target_lng - source_lng
 
-    return distance / 1000
+    # Formula for getting distance between (lat, lng): d = acos( sin φ1 ⋅ sin φ2 + cos φ1 ⋅ cos φ2 ⋅ cos Δλ ) ⋅ R
+    a = sin(diff_lat / 2) ** 2 + cos(source_lat) * cos(target_lat) * sin(diff_lng / 2) ** 2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+    distance = R * c
+
+    return distance

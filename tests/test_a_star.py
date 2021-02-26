@@ -12,8 +12,8 @@ def test_a_star():
     # nodes = a_star(1867, 239)
     # nodes = a_star(8, 57)
     # nodes = a_star(55, 48)
-    # Ard na Greine
-    nodes = a_star(75107, 68650)
+    # New Zealand
+    nodes = a_star(418407, 290490)
 
     assert nodes is not None
 
