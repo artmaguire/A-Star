@@ -17,17 +17,17 @@ def close_connection():
 
 
 def get_node(node_id):
-    query = """SELECT * FROM nz_ways_vertices_pgr WHERE id = %s;"""
+    query = """SELECT ST_X(geom_vertex), ST_Y(geom_vertex) FROM ie_vertices WHERE id=%s;"""
 
     cur.execute(query, (node_id,))
-    node_tuple = cur.fetchall()
+    node_tuple = cur.fetchone()
 
-    return Node(node_id, 0, node_tuple[0][3], node_tuple[0][4], 0, None)
+    return Node(node_id, 0, node_tuple[0], node_tuple[1], 0, None)
 
 
 def get_ways(source: Node, tag_tuple: str, closed_set, target: Node):
-    query = """SELECT source, target, cost_s, x1, y1, x2, y2, one_way FROM nz_ways WHERE (target = %s OR source = %s) AND 
-        tag_id in %s"""
+    query = """SELECT source, target, cost, x1, y1, x2, y2, reverse_cost FROM ie_edges WHERE (target = %s OR source = %s) AND 
+        clazz in %s"""
 
     cur.execute(query, (source.node_id, source.node_id, tag_tuple))
     ways = cur.fetchall()
@@ -51,11 +51,11 @@ def get_ways(source: Node, tag_tuple: str, closed_set, target: Node):
         # Check if one_way road and we are going in the right direction
         # We do this by checking if we are at the source (start) of the one way road, and not the target (end)
         # Also works for roundabouts
-        if way[7] == 1 and source.node_id != way[0]:
+        if way[7] == 1000000 and source.node_id != way[0]:
             continue
 
         nodes.append(
-                Node(node_id, source.cost + way[2], lat, lng, get_distance(lat, lng, target), source))
+                Node(node_id, source.cost + (way[2] * 3600), lat, lng, get_distance(lat, lng, target), source))
 
     return nodes
 

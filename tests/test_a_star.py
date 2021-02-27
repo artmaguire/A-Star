@@ -6,14 +6,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 def test_a_star():
-    # 238 Source: Tynwald Close
-    # 496 Target: Reayrt Aalin
-    # nodes = a_star(76, 496)
-    # nodes = a_star(1867, 239)
-    # nodes = a_star(8, 57)
-    # nodes = a_star(55, 48)
-    # New Zealand
-    nodes = a_star(418407, 290490)
+    # Lighthouse to Doonbeg
+    nodes = a_star(420221, 472893)
 
     assert nodes is not None
 
