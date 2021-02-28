@@ -21,11 +21,11 @@ class TestAStar:
 
     def test_a_star(self):
         # Lighthouse to Doonbeg
-        # nodes = a_star(472893, 420221)
+        nodes = self.dfosm.a_star(472893, 420221)
         # Ard na Greine
-        nodes = self.dfosm.a_star(40272, 47713)
+        # nodes = self.dfosm.a_star(40272, 47713)
         # Tullig to Ballylongford
-        # nodes = a_star(281360, 918311)
+        # nodes = self.dfosm.a_star(281360, 918311)
 
         assert nodes is not None
 

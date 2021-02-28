@@ -1,6 +1,6 @@
 import psycopg2
 
-from classes.Node import Node
+from .. import classes
 from .tags import Flags
 from .geometry_helper import get_distance
 
@@ -34,9 +34,9 @@ class PGHelper:
         self.cur.execute(query, (node_id,))
         node_tuple = self.cur.fetchone()
 
-        return Node(node_id, 0, 0, node_tuple[0], node_tuple[1], 1, 0, None)
+        return classes.Node(node_id, 0, 0, node_tuple[0], node_tuple[1], 1, 0, None)
 
-    def get_ways(self, source: Node, target: Node, previous: Node, flag: Flags, closed_set: tuple):
+    def get_ways(self, source: classes.Node, target: classes.Node, previous: classes.Node, flag: Flags, closed_set: tuple):
         query = """
         SELECT target, x2, y2, clazz, flags, cost, km, kmh, geom_way FROM ie_edges WHERE source = %(source)s AND target != %(previous)s AND flags & %(flag)s != 0 AND target NOT IN %(closed)s
         UNION
@@ -57,7 +57,7 @@ class PGHelper:
         ways = self.cur.fetchall()
 
         nodes = [
-            Node(way[0], source.cost, way[5] * 60, way[1], way[2], way[7], get_distance(way[1], way[2], target), source)
+            classes.Node(way[0], source.cost, way[5] * 60, way[1], way[2], way[7], get_distance(way[1], way[2], target), source)
             for way in ways]
 
         return nodes

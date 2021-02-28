@@ -1,8 +1,8 @@
-from utilities.pg_helper import PGHelper
-from classes import PriorityQueue as pq
 import logging
 
-from utilities import Flags
+from .classes import PriorityQueue as pq
+from .utilities import Flags
+from .utilities import PGHelper
 
 logger = logging.getLogger(__name__.split(".")[0])
 
