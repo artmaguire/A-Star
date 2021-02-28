@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "dfosm"
+version = "0.1.0"
+description = "Routing Algorithms for Direction Finding Using OpenStreetMap"
+authors = ["artmaguire <a.elnino11@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+psycopg2-binary = "^2.8.6"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.2"
+python-decouple = "^3.4"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra --color=yes -o log_cli=true --log-cli-level DEBUG"
+testpaths = ["tests"]
+
+[tool.coverage.path]
+source = ["dfosm"]
+
+[tool.coverage.run]
+branch = true
+source = ["dfosm"]
+omit = ["dfosm/__init__.py"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 40
+
+[tool.black]
+line-length = 120
+skip-string-normalization = true

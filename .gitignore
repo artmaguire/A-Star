@@ -1,0 +1,10 @@
+.pytest_cache/
+.tox/
+venv/
+.idea/
+__pycache__/
+dist/
+
+.coverage*
+poetry.lock
+.python-version
