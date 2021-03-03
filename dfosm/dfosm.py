@@ -23,11 +23,14 @@ class DFOSM:
     def close_database(self):
         self.pg.close_connection()
 
-    def a_star(self, source_id, target_id):
-        best_node = self.pg.get_node(source_id)
+    def a_star(self, source_lat, source_lng, target_id):
+        best_node, second_best_node = self.pg.find_nearest_road(source_lat, source_lng)
+
         target_node = self.pg.get_node(target_id)
 
-        closed_set = [source_id]
+        closed_set = [best_node.node_id, second_best_node.node_id]
+
+        node_count = 1
 
         while True:
             nodes = self.pg.get_ways(best_node, target_node, best_node.previous, Flags.CAR, tuple(closed_set))
@@ -41,16 +44,28 @@ class DFOSM:
             if best_node.node_id == target_id:
                 break
 
+            node_count += 1
+
         route = []
 
-        while best_node is not None:
-            route.append(best_node)
-            best_node = best_node.previous
+        curr_node = best_node
+        while curr_node.geojson is not None:
+            route.append(curr_node.geojson)
+            curr_node = curr_node.previous
 
         route.reverse()
 
-        s = [str(n.node_id) for n in route]
-        st = "'" + "', '".join(s) + "'"
-        logger.info(st)
+        logger.info('******************************************************')
+        logger.info(f'Total Nodes Searched: {node_count}')
+        logger.info(f'Nodes In Route: {len(route)}')
+        logger.info(f'Estimated distance: {best_node.get_total_distance():.2f}km')
+        logger.info(f'Estimated Time: {best_node.cost:.2f}m')
 
-        return route
+        # s = [str(n.node_id) for n in route]
+        # st = "'" + "', '".join(s) + "'"
+        # logger.info(st)
+
+        return '[' + ','.join(route) + ']'
+
+    def find_nearest_road(self, lat, lng):
+        return self.pg.find_nearest_road(lat, lng)

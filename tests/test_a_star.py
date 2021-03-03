@@ -21,19 +21,28 @@ class TestAStar:
 
     def test_a_star(self):
         # Lighthouse to Doonbeg
-        nodes = self.dfosm.a_star(472893, 420221)
+        geojson = self.dfosm.a_star(-9.784956, 52.616494, 402427)
         # Ard na Greine
-        # nodes = self.dfosm.a_star(40272, 47713)
+        # geojson = self.dfosm.a_star(40272, 47713)
         # Tullig to Ballylongford
-        # nodes = self.dfosm.a_star(281360, 918311)
+        # geojson = self.dfosm.a_star(281360, 918311)
 
-        assert nodes is not None
+        logger.info(geojson)
+
+        assert geojson is not None
 
     def test_a_star_incorrect(self):
-        nodes = self.dfosm.a_star(238, -1)
+        geojson = self.dfosm.a_star(238, -1)
 
-        assert nodes is None
+        assert geojson is None
 
     def test_a_star_not_found(self):
-        nodes = self.dfosm.a_star(238, 1000000)
-        assert nodes is None
+        geojson = self.dfosm.a_star(238, 1000000000)
+        assert geojson is None
+
+    def test_find_nearest_road(self):
+        node1, node2 = self.dfosm.find_nearest_road(-9.784956, 52.616494)
+        logger.info(node1)
+        logger.info(node2)
+
+        assert node1 is not None and node2 is not None
