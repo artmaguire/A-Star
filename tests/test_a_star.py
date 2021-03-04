@@ -21,7 +21,7 @@ class TestAStar:
 
     def test_a_star(self):
         # Lighthouse to Doonbeg
-        geojson = self.dfosm.a_star(-9.784956, 52.616494, -9.519095, 52.744294)
+        geojson = self.dfosm.a_star(52.614722,-9.776111,52.73237245,-9.52457371)
         # Ard na Greine
         # geojson = self.dfosm.a_star(40272, 47713)
         # Tullig to Ballylongford

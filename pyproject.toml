@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dfosm"
-version = "0.2.0"
+version = "0.2.1"
 description = "Routing Algorithms for Direction Finding Using OpenStreetMap"
 authors = ["artmaguire <a.elnino11@gmail.com>"]
 license = "MIT"

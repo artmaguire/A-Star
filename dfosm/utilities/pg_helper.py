@@ -62,9 +62,9 @@ class PGHelper:
 
         return nodes
 
-    def find_nearest_road(self, lat, lng):
+    def find_nearest_road(self, x, y):
         query = """select tgt, src, st_asgeojson(geom) from dfosm_split_geometry(%s, %s);"""
-        self.cur.execute(query, (lat, lng))
+        self.cur.execute(query, (x, y))
         node_tuples = self.cur.fetchall()
 
         nodes = []

@@ -1,9 +1,9 @@
 class Node:
-    def __init__(self, node_id, previous_cost, cost, lat, lng, km=0, kmh=1, distance=1, previous=None, geojson=None):
+    def __init__(self, node_id, previous_cost, cost, lng, lat, km=0, kmh=1, distance=1, previous=None, geojson=None):
         self.node_id = node_id
         self.cost = previous_cost + (cost * 120 / float(kmh))
-        self.lat = lat
         self.lng = lng
+        self.lat = lat
         self.km = km
         self.kmh = kmh
         self.distance = distance

@@ -25,11 +25,11 @@ class DFOSM:
         self.pg.close_connection()
 
     def a_star(self, source_lat, source_lng, target_lat, target_lng):
-        best_node, second_best_node = self.pg.find_nearest_road(source_lat, source_lng)
+        best_node, second_best_node = self.pg.find_nearest_road(source_lng, source_lat)
 
-        target_node = Node(-1, 0, 0, target_lat, target_lng)
+        target_node = Node(-1, 0, 0, target_lng, target_lat)
 
-        target_node_a, target_node_b = self.pg.find_nearest_road(target_lat, target_lng)
+        target_node_a, target_node_b = self.pg.find_nearest_road(target_lng, target_lat)
 
         closed_set = [best_node.node_id, second_best_node.node_id]
 
@@ -77,5 +77,6 @@ class DFOSM:
 
         return '[' + ','.join(route) + ']'
 
-    def find_nearest_road(self, lat, lng):
-        return self.pg.find_nearest_road(lat, lng)
+    # X: longitude, Y: latitude
+    def find_nearest_road(self, x, y):
+        return self.pg.find_nearest_road(x, y)
