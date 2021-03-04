@@ -1,6 +1,7 @@
 import logging
 
 from .classes import PriorityQueue as pq
+from .classes import Node
 from .utilities import Flags
 from .utilities import PGHelper
 
@@ -23,10 +24,12 @@ class DFOSM:
     def close_database(self):
         self.pg.close_connection()
 
-    def a_star(self, source_lat, source_lng, target_id):
+    def a_star(self, source_lat, source_lng, target_lat, target_lng):
         best_node, second_best_node = self.pg.find_nearest_road(source_lat, source_lng)
 
-        target_node = self.pg.get_node(target_id)
+        target_node = Node(-1, 0, 0, target_lat, target_lng)
+
+        target_node_a, target_node_b = self.pg.find_nearest_road(target_lat, target_lng)
 
         closed_set = [best_node.node_id, second_best_node.node_id]
 
@@ -41,10 +44,17 @@ class DFOSM:
 
             closed_set.append(best_node.node_id)
 
-            if best_node.node_id == target_id:
+            if best_node.node_id == target_node_a.node_id:
+                target_node.geojson = target_node_a.geojson
+                break
+            elif best_node.node_id == target_node_b.node_id:
+                target_node.geojson = target_node_b.geojson
                 break
 
             node_count += 1
+
+        target_node.previous = best_node
+        best_node = target_node
 
         route = []
 
