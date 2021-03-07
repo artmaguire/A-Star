@@ -14,14 +14,14 @@ class TestAStar:
 
     def setup_method(self):
         self.dfosm = target.DFOSM(conf.DBNAME, conf.DBUSER, conf.DBPASSWORD, conf.DBHOST, conf.DBPORT, conf.EDGES_TABLE,
-                                 conf.VERTICES_TABLE)
+                                  conf.VERTICES_TABLE)
 
     def teardown_method(self):
         self.dfosm.close_database()
 
     def test_a_star(self):
         # Lighthouse to Doonbeg
-        geojson = self.dfosm.a_star(52.614722,-9.776111,52.73237245,-9.52457371)
+        geojson = self.dfosm.a_star(52.614762, -9.786394, 52.593351, -9.795599, visualisation=True)
         # Ard na Greine
         # geojson = self.dfosm.a_star(40272, 47713)
         # Tullig to Ballylongford

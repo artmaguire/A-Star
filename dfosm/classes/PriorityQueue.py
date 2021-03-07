@@ -1,13 +1,27 @@
 import heapq
 
-__heap__ = []
 
-def push(node):
-    heapq.heappush(__heap__, node)
+class PriorityQueue:
+    def __init__(self):
+        self.__heap__ = []
 
-def push_many(nodes):
-    for node in nodes:
-        push(node)
+    def push(self, node):
+        heapq.heappush(self.__heap__, node)
 
-def pop():
-    return heapq.heappop(__heap__)
+    def push_many(self, nodes):
+        for node in nodes:
+            self.push(node)
+
+    def pop(self):
+        try:
+            item = heapq.heappop(self.__heap__)
+        except IndexError:
+            item = None
+
+        return item
+
+    def heapify(self):
+        return heapq.heapify(self.__heap__)
+
+    def size(self):
+        return len(self.__heap__)
