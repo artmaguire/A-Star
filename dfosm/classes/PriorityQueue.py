@@ -25,3 +25,6 @@ class PriorityQueue:
 
     def size(self):
         return len(self.__heap__)
+
+    def to_list(self):
+        return list(item for item in self.__heap__)

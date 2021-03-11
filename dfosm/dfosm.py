@@ -7,8 +7,6 @@ from .utilities import PGHelper
 
 logger = logging.getLogger(__name__.split(".")[0])
 
-pq = PriorityQueue()
-
 class DFOSM:
     def __init__(self, dbname, dbuser, dbpassword, dbhost='127.0.0.1', dbport=5432, edges_table='edges',
                  vertices_table='vertices'):
@@ -19,13 +17,14 @@ class DFOSM:
         self.dbport = dbport
         self.edges_table = edges_table
         self.vertices_table = vertices_table
+        self.pq = PriorityQueue()
 
         self.pg = PGHelper(dbname, dbuser, dbpassword, dbhost, dbport, edges_table, vertices_table)
 
     def close_database(self):
         self.pg.close_connection()
 
-    def a_star(self, source_lat, source_lng, target_lat, target_lng, visualisation=False):
+    def a_star(self, source_lat, source_lng, target_lat, target_lng, visualisation=False, history=False):
         best_node, second_best_node = self.pg.find_nearest_road(source_lng, source_lat)
 
         target_node = Node(-1, 0, 0, target_lng, target_lat)
@@ -36,11 +35,16 @@ class DFOSM:
 
         node_count = 1
 
+        history_list = []
+
         while True:
             nodes = self.pg.get_ways(best_node, target_node, best_node.previous, Flags.CAR, tuple(closed_set))
-            pq.push_many(nodes)
+            if history:
+                history_list.append([node.serialize() for node in nodes])
+            self.pq.push_many(nodes)
+            qq = self.pq.to_list()
 
-            best_node = pq.pop()
+            best_node = self.pq.pop()
             logger.debug(best_node.__str__())
 
             closed_set.append(best_node.node_id)
@@ -66,12 +70,15 @@ class DFOSM:
             'end_point':   str(best_node.lat) + ',' + str(best_node.lng),
         }
 
+        if history:
+            to_return['history'] = history_list
+
         if visualisation:
             branch_routes = []
             Node.found_route = True
-            pq.heapify()
+            self.pq.heapify()
 
-            best_branch_node = pq.pop()
+            best_branch_node = self.pq.pop()
 
             while best_branch_node:
                 branch = {'cost': best_branch_node.cost,
@@ -79,9 +86,9 @@ class DFOSM:
                           'total_cost': best_branch_node.get_total_cost(),
                           'route': self._route_to_str_(self._get_route_(best_branch_node))}
                 branch_routes.append(branch)
-                pq.heapify()
+                self.pq.heapify()
 
-                best_branch_node = pq.pop()
+                best_branch_node = self.pq.pop()
 
             to_return['branch'] = branch_routes
 
