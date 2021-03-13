@@ -17,6 +17,9 @@ class PGHelper:
         self.edges_table = edges_table
         self.vertices_table = vertices_table
 
+        self.conn = None
+        self.cur = None
+
         self.open_connection()
 
     def open_connection(self):
@@ -36,19 +39,17 @@ class PGHelper:
 
         return classes.Node(node_id, 0, 0, node_tuple[0], node_tuple[1])
 
-    def get_ways(self, source: classes.Node, target: classes.Node, previous: classes.Node, flag: Flags, closed_set: tuple):
+    def get_ways(self, source: classes.Node, target: classes.Node, flag: Flags, closed_set: tuple):
         query = """
-        SELECT target, x2, y2, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edges WHERE source = %(source)s AND target != %(previous)s AND flags & %(flag)s != 0 AND target NOT IN %(closed)s
+        SELECT target, x2, y2, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edges WHERE source = %(source)s AND flags & %(flag)s != 0 AND target NOT IN %(closed)s
         UNION
-        SELECT source, x1, y1, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edges WHERE target = %(source)s AND source != %(previous)s AND flags & %(flag)s != 0 AND reverse_cost < 1000000 AND source NOT IN %(closed)s
+        SELECT source, x1, y1, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edges WHERE target = %(source)s AND flags & %(flag)s != 0 AND reverse_cost < 1000000 AND source NOT IN %(closed)s
         """
 
         # Checks is previous node id is None - Only occurs for first node
-        prev_id = -1 if previous is None else previous.node_id
 
         params = {
             'source':   source.node_id,
-            'previous': prev_id,
             'flag':     flag.value,
             'closed':   closed_set
         }
@@ -57,7 +58,8 @@ class PGHelper:
         ways = self.cur.fetchall()
 
         nodes = [
-            classes.Node(way[0], source.cost, way[5] * 60, way[1], way[2], km=way[6], kmh=way[7], distance=get_distance(way[1], way[2], target), previous=source, geojson=way[8])
+            classes.Node(way[0], source.cost, way[5] * 60, way[1], way[2], km=way[6], kmh=way[7],
+                         distance=get_distance(way[2], way[1], target.lat, target.lng), previous=source, geojson=way[8])
             for way in ways]
 
         return nodes
@@ -70,8 +72,7 @@ class PGHelper:
         nodes = []
 
         for node_tuple in node_tuples:
-            dummy_node = classes.Node(node_tuple[1], 0, 0, 0, 0)
-            node = classes.Node(node_tuple[0], 0, 0, 0, 0, 0, previous=dummy_node, geojson=node_tuple[2])
+            node = classes.Node(node_tuple[0], 0, 0, 0, 0, 0, geojson=node_tuple[2])
             nodes.append(node)
 
         return nodes[0], nodes[1]

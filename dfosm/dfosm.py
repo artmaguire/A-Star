@@ -1,4 +1,5 @@
 import logging
+from time import time
 
 from .classes import PriorityQueue
 from .classes import Node
@@ -6,6 +7,7 @@ from .utilities import Flags
 from .utilities import PGHelper
 
 logger = logging.getLogger(__name__.split(".")[0])
+
 
 class DFOSM:
     def __init__(self, dbname, dbuser, dbpassword, dbhost='127.0.0.1', dbport=5432, edges_table='edges',
@@ -17,7 +19,6 @@ class DFOSM:
         self.dbport = dbport
         self.edges_table = edges_table
         self.vertices_table = vertices_table
-        self.pq = PriorityQueue()
 
         self.pg = PGHelper(dbname, dbuser, dbpassword, dbhost, dbport, edges_table, vertices_table)
 
@@ -25,6 +26,8 @@ class DFOSM:
         self.pg.close_connection()
 
     def a_star(self, source_lat, source_lng, target_lat, target_lng, visualisation=False, history=False):
+        pq = PriorityQueue()
+
         best_node, second_best_node = self.pg.find_nearest_road(source_lng, source_lat)
 
         target_node = Node(-1, 0, 0, target_lng, target_lat)
@@ -32,22 +35,27 @@ class DFOSM:
         target_node_a, target_node_b = self.pg.find_nearest_road(target_lng, target_lat)
 
         closed_set = [best_node.node_id, second_best_node.node_id]
+        pq.push(second_best_node)
+
+        history_list = [[best_node.serialize(), second_best_node.serialize()]]
 
         node_count = 1
 
-        history_list = []
-
         while True:
-            nodes = self.pg.get_ways(best_node, target_node, best_node.previous, Flags.CAR, tuple(closed_set))
+            # t0 = time()
+            nodes = self.pg.get_ways(best_node, target_node, Flags.CAR, tuple(closed_set))
+            # TODO: Check if node is the target instead of waiting until it gets popped from PriorityQueue
             if history:
                 history_list.append([node.serialize() for node in nodes])
-            self.pq.push_many(nodes)
-            qq = self.pq.to_list()
+            # t1 = time()
+            pq.push_many(nodes)
 
-            best_node = self.pq.pop()
+            best_node = pq.pop()
             logger.debug(best_node.__str__())
 
             closed_set.append(best_node.node_id)
+
+            # print(f'Count: {node_count}\t\tDB: {round((t1 - t0) * 1000000)}')
 
             if best_node.node_id == target_node_a.node_id:
                 target_node.geojson = target_node_a.geojson
@@ -61,13 +69,16 @@ class DFOSM:
         target_node.previous = best_node
         best_node = target_node
 
+        if history:
+            history_list.append([best_node.serialize()])
+
         curr_node = best_node
         route = self._get_route_(curr_node)
 
         to_return = {
-            'route':       self._route_to_str_(route),
+            'route': self._route_to_str_(route),
             # 'start_point': route[0].lat + ',' + route[0].lng,
-            'end_point':   str(best_node.lat) + ',' + str(best_node.lng),
+            'end_point': str(best_node.lat) + ',' + str(best_node.lng),
         }
 
         if history:
@@ -76,19 +87,19 @@ class DFOSM:
         if visualisation:
             branch_routes = []
             Node.found_route = True
-            self.pq.heapify()
+            pq.heapify()
 
-            best_branch_node = self.pq.pop()
+            best_branch_node = pq.pop()
 
             while best_branch_node:
                 branch = {'cost': best_branch_node.cost,
                           'distance': best_branch_node.distance,
-                          'total_cost': best_branch_node.get_total_cost(),
+                          'total_cost': best_branch_node.calculate_total_cost(),
                           'route': self._route_to_str_(self._get_route_(best_branch_node))}
                 branch_routes.append(branch)
-                self.pq.heapify()
+                pq.heapify()
 
-                best_branch_node = self.pq.pop()
+                best_branch_node = pq.pop()
 
             to_return['branch'] = branch_routes
 
@@ -96,7 +107,7 @@ class DFOSM:
         logger.info(f'Total Nodes Searched: {node_count}')
         logger.info(f'Nodes In Route: {len(route)}')
         logger.info(f'Estimated distance: {best_node.get_total_distance():.2f}km')
-        logger.info(f'Estimated Time: {best_node.cost:.2f}m')
+        logger.info(f'Estimated Time: {best_node.cost_minutes:.2f}m')
 
         return to_return
 
