@@ -38,7 +38,7 @@ class Node:
     def cost_modifier(self, initial_cost):
         cost = initial_cost
 
-        if self.distance > 2 and self.cost_minutes > 2:
+        if self.distance > 5 and self.cost_minutes > 2:
             # cost *= 90 / self.kmh
             if self.kmh >= 100:
                 cost *= 0.2
@@ -62,7 +62,7 @@ class Node:
 
         delta = ((self.distance - self.previous.distance) / self.kmh) * 60
 
-        if self.distance > 2 and self.cost_minutes > 2:
+        if self.distance > 5 and self.cost_minutes > 2:
             # Lessen the punishment / reward on fast roads to avoid getting stuck on a long bend / ring road
             if self.kmh >= 100:
                 delta *= 0.25
