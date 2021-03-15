@@ -1,5 +1,5 @@
 import psycopg2
-from psycopg2.extensions import AsIs
+from psycopg2 import pool
 
 from .. import classes
 from .tags import Flags
@@ -18,46 +18,54 @@ class PGHelper:
         self.edges_table = edges_table
         self.vertices_table = vertices_table
 
-        self.conn = None
-        self.cur = None
+        self.conn_pool = psycopg2.pool.ThreadedConnectionPool(12, 20, dbname=self.dbname, user=self.user,
+                                                              password=self.password, host=self.host,
+                                                              port=self.port)
 
-        self.open_connection()
+        self.conn = self.get_connection()
 
-    def open_connection(self):
-        self.conn = psycopg2.connect(dbname=self.dbname, user=self.user, password=self.password, host=self.host,
-                                     port=self.port)
-        self.cur = self.conn.cursor()
+    def get_connection(self):
+        conn = self.conn_pool.getconn()
+        conn.autocommit = True
+        return conn
 
-    def close_connection(self):
-        self.cur.close()
-        self.conn.close()
+    def put_connection(self, conn=None):
+        if conn is None:
+            conn = self.conn
+        self.conn_pool.putconn(conn)
 
-    # def get_node(self, node_id):
-    #     query = """SELECT ST_X(geom_vertex), ST_Y(geom_vertex) FROM ie_vertix WHERE id=%s;"""
-    #
-    #     self.cur.execute(query, (node_id,))
-    #     node_tuple = self.cur.fetchone()
-    #
-    #     return classes.Node(node_id, 0, 0, node_tuple[0], node_tuple[1])
+    def close_all_connections(self):
+        self.conn_pool.closeall()
 
-    def get_ways(self, source: classes.Node, target: classes.Node, flag: Flags, closed_set: tuple):
-        query = """
-        SELECT target, x2, y2, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM %(edge_table)s WHERE source = %(source)s AND flags & %(flag)s != 0 AND target NOT IN %(closed)s
-        UNION
-        SELECT source, x1, y1, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM %(edge_table)s WHERE target = %(source)s AND flags & %(flag)s != 0 AND reverse_cost < 1000000 AND source NOT IN %(closed)s
-        """
+    def get_node(self, node_id):
+        with self.conn.cursor() as cur:
+            query = """SELECT ST_X(geom_vertex), ST_Y(geom_vertex) FROM ie_vertices WHERE id=%s;"""
 
-        # Checks is previous node id is None - Only occurs for first node
+            cur.execute(query, (node_id,))
+            node_tuple = cur.fetchone()
 
-        params = {
-            'edge_table': AsIs(self.edges_table),
-            'source':     source.node_id,
-            'flag':       flag.value,
-            'closed':     closed_set
-        }
+        return classes.Node(node_id, 0, 0, node_tuple[0], node_tuple[1])
 
-        self.cur.execute(query, params)
-        ways = self.cur.fetchall()
+    def get_ways(self, source: classes.Node, target: classes.Node, flag: Flags, closed_set: tuple, conn=None):
+        if conn is None:
+            conn = self.conn
+        with conn.cursor() as cur:
+            query = """
+            SELECT target, x2, y2, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edge WHERE source = %(source)s AND flags & %(flag)s != 0 AND target NOT IN %(closed)s
+            UNION
+            SELECT source, x1, y1, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edge WHERE target = %(source)s AND flags & %(flag)s != 0 AND reverse_cost < 1000000 AND source NOT IN %(closed)s
+            """
+
+            # Checks is previous node id is None - Only occurs for first node
+
+            params = {
+                'source': source.node_id,
+                'flag': flag.value,
+                'closed': closed_set
+            }
+
+            cur.execute(query, params)
+            ways = cur.fetchall()
 
         nodes = [
             classes.Node(way[0], source.cost, way[5] * 60, way[1], way[2], km=way[6], kmh=way[7],
@@ -67,9 +75,10 @@ class PGHelper:
         return nodes
 
     def find_nearest_road(self, x, y):
-        query = """select tgt, src, st_asgeojson(geom) from dfosm_split_geometry(%s, %s);"""
-        self.cur.execute(query, (x, y))
-        node_tuples = self.cur.fetchall()
+        with self.conn.cursor() as cur:
+            query = """select tgt, src, st_asgeojson(geom) from dfosm_split_geometry(%s, %s);"""
+            cur.execute(query, (x, y))
+            node_tuples = cur.fetchall()
 
         nodes = []
 

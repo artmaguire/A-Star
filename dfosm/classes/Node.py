@@ -38,12 +38,12 @@ class Node:
     def cost_modifier(self, initial_cost):
         cost = initial_cost
 
-        if self.distance > 5 and self.cost_minutes > 2:
+        if self.distance > 3 and self.cost_minutes > 2:
             # cost *= 90 / self.kmh
             if self.kmh >= 100:
-                cost *= 0.2
+                cost *= 0.4
             if self.kmh >= 120:
-                cost *= 0.05
+                cost *= 0.2
             if self.kmh <= 80:
                 cost *= 1
             if self.kmh <= 50:
@@ -51,8 +51,11 @@ class Node:
             if self.kmh < 40:
                 cost *= 100
 
+        if self.cost_minutes < 5 and self.kmh > 30:
+            cost /= 5
+
         if self.distance < 1 and self.kmh > 10:
-            cost /= 2
+            cost /= 10
 
         return cost
 
@@ -62,12 +65,12 @@ class Node:
 
         delta = ((self.distance - self.previous.distance) / self.kmh) * 60
 
-        if self.distance > 5 and self.cost_minutes > 2:
+        if self.distance > 3 and self.cost_minutes > 2:
             # Lessen the punishment / reward on fast roads to avoid getting stuck on a long bend / ring road
             if self.kmh >= 100:
-                delta *= 0.25
+                delta *= 0.5
             if self.kmh >= 120:
-                delta *= 0.2
+                delta *= 0.4
             if self.kmh <= 80:
                 delta *= 1
 
@@ -75,15 +78,6 @@ class Node:
             delta *= 0.5
 
         return delta
-
-    def __str__(self) -> str:
-        return str(self.serialize())
-
-    def __lt__(self, other):
-        if not Node.found_route:
-            return self.total_cost < other.total_cost
-
-        return self.get_branch_length() < other.get_branch_length()
 
     def get_previous(self):
         if self.visited is True:
@@ -110,3 +104,15 @@ class Node:
             'geojson': self.geojson
         }
         return d
+
+    def __str__(self) -> str:
+        return str(self.serialize())
+
+    def __lt__(self, other):
+        if not Node.found_route:
+            return self.total_cost < other.total_cost
+
+        return self.get_branch_length() < other.get_branch_length()
+
+    def __eq__(self, other):
+        return self.node_id == other.node_id
