@@ -24,7 +24,7 @@ class TestAStar:
         # Lighthouse to Doonbeg
         # geojson = self.dfosm.a_star(52.614722,-9.776111,52.5595239,-9.9381113, visualisation=False)
         # Ard na Greine
-        geojson = self.dfosm.a_star(52.7082188, -8.8685024, 52.8397697, -8.9796499)
+        geojson = self.dfosm.a_star(52.614722,-9.776111,52.679167,-9.644167, history=True)
         # Tullig to Ballylongford
         # geojson = self.dfosm.a_star(281360, 918311)
         # Tullig to Kilrush Marina

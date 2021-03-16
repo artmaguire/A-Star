@@ -50,7 +50,7 @@ class DFOSM:
         target_node_dict = {node.node_id: node for node in end_nodes}
 
         pq = PriorityQueue()
-        notify_queue = Queue(maxsize=2)
+        notify_queue = Queue()
         for node in start_nodes:
             pq.put(node)
 
@@ -59,7 +59,7 @@ class DFOSM:
         t0 = time()
         node_count = astar_manager(self.pg, pq, notify_queue, closed_node_dict, target_node,
                                    target_node_dict,
-                                   Flags.CAR, history_list, workers=6)
+                                   Flags.CAR, history_list, workers=1)
         best_node = notify_queue.get()
         nearest_node = notify_queue.get()
         t1 = time()
@@ -91,17 +91,16 @@ class DFOSM:
             Node.found_route = True
             # pq.heapify()
 
-            best_branch_node = pq.get()
-
-            while best_branch_node:
+            while True:
+                if pq.empty():
+                    break
+                best_branch_node = pq.get()
                 branch = {'cost': best_branch_node.cost,
                           'distance': best_branch_node.distance,
                           'total_cost': best_branch_node.calculate_total_cost(),
                           'route': self._route_to_str_(self._get_route_(best_branch_node))}
                 branch_routes.append(branch)
                 # pq.heapify()
-
-                best_branch_node = pq.get()
 
             to_return['branch'] = branch_routes
 
