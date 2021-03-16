@@ -5,9 +5,9 @@ import logging
 logger = logging.getLogger(__name__.split(".")[0])
 
 
-def astar_manager(pg, pq, notify_queue, closed_set, target_node, target_node_dict, flag=1, history_list=None, workers=6):
+def astar_manager(pg, pq, notify_queue, closed_node_dict, target_node, target_node_dict, flag=1, history_list=None, workers=6):
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [executor.submit(astar_worker, pg, pq, notify_queue, closed_set, target_node,
+        futures = [executor.submit(astar_worker, pg, pq, notify_queue, closed_node_dict, target_node,
                                    target_node_dict, flag, history_list) for _ in range(workers)]
         node_count = sum(f.result() for f in futures)
     return node_count

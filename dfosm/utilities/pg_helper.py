@@ -18,7 +18,7 @@ class PGHelper:
         self.edges_table = edges_table
         self.vertices_table = vertices_table
 
-        self.conn_pool = psycopg2.pool.ThreadedConnectionPool(12, 20, dbname=self.dbname, user=self.user,
+        self.conn_pool = psycopg2.pool.ThreadedConnectionPool(12, 100, dbname=self.dbname, user=self.user,
                                                               password=self.password, host=self.host,
                                                               port=self.port)
 
@@ -74,10 +74,17 @@ class PGHelper:
 
         return nodes
 
-    def find_nearest_road(self, x, y):
+    def find_closest_point_on_edge(self, x, y, flag):
         with self.conn.cursor() as cur:
-            query = """select tgt, src, st_asgeojson(geom) from dfosm_split_geometry(%s, %s);"""
-            cur.execute(query, (x, y))
+            query = """select lat, lng, geom_id, on_vertix from dfosm_find_closest_point_on_edge(%s, %s, %s);"""
+            cur.execute(query, (x, y, flag))
+            result = cur.fetchone()
+        return result
+
+    def find_nearest_road(self, x, y, edge_id):
+        with self.conn.cursor() as cur:
+            query = """select tgt, src, st_asgeojson(geom) from dfosm_split_geometry(%s, %s, %s);"""
+            cur.execute(query, (x, y, edge_id))
             node_tuples = cur.fetchall()
 
         nodes = []

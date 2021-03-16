@@ -29,24 +29,32 @@ class DFOSM:
         self.pg.put_connection()
 
     def a_star(self, source_lat, source_lng, target_lat, target_lng, visualisation=False, history=False):
-        best_node, second_best_node = self.pg.find_nearest_road(source_lng, source_lat)
+        end_poi_lat, end_poi_lng, geom_id, on_vertix = self.pg.find_closest_point_on_edge(target_lng, target_lat,
+                                                                                              Flags.CAR.value)
 
-        target_node = Node(-1, 0, 0, target_lng, target_lat)
+        target_node = Node(-1, 0, 0, end_poi_lng, end_poi_lat)
 
-        target_node_a, target_node_b = self.pg.find_nearest_road(target_lng, target_lat)
+        if on_vertix:
+            end_nodes = self.pg.get_ways(Node(geom_id, 0, 0, 0, 0), target_node, Flags.CAR, (geom_id,))
+        else:
+            end_nodes = self.pg.find_nearest_road(end_poi_lng, end_poi_lat, geom_id)
 
-        closed_node_dict = {best_node.node_id: best_node,
-                            second_best_node.node_id: second_best_node}
+        start_poi_lat, start_poi_lng, geom_id, on_vertix = self.pg.find_closest_point_on_edge(source_lng, source_lat, Flags.CAR.value)
+        if on_vertix:
+            start_nodes = self.pg.get_ways(Node(geom_id, 0, 0, 0, 0), target_node, Flags.CAR, (geom_id,))
+        else:
+            start_nodes = self.pg.find_nearest_road(start_poi_lng, start_poi_lat, geom_id)
 
-        target_node_dict = {target_node_a.node_id: target_node_a,
-                            target_node_b.node_id: target_node_b}
+        closed_node_dict = {node.node_id: node for node in start_nodes}
+
+        target_node_dict = {node.node_id: node for node in end_nodes}
 
         pq = PriorityQueue()
         notify_queue = Queue(maxsize=2)
-        pq.put(best_node)
-        pq.put(second_best_node)
+        for node in start_nodes:
+            pq.put(node)
 
-        history_list = [[best_node.serialize(), second_best_node.serialize()]] if history else None
+        history_list = [[node.serialize() for node in start_nodes]] if history else None
 
         t0 = time()
         node_count = astar_manager(self.pg, pq, notify_queue, closed_node_dict, target_node,
@@ -69,8 +77,10 @@ class DFOSM:
 
         to_return = {
             'route': self._route_to_str_(route),
-            # 'start_point': route[0].lat + ',' + route[0].lng,
-            'end_point': str(best_node.lat) + ',' + str(best_node.lng),
+            'start_point': str(start_poi_lat) + ',' + str(start_poi_lng),
+            'end_point': str(end_poi_lat) + ',' + str(end_poi_lng),
+            'distance': best_node.get_total_distance(),
+            'time': best_node.cost_minutes,
         }
 
         if history:
@@ -104,44 +114,51 @@ class DFOSM:
         return to_return
 
     def bi_a_star(self, source_lat, source_lng, target_lat, target_lng, visualisation=False, history=False):
-        source_node = Node(0, 0, 0, source_lng, source_lat)
-        best_node, second_best_node = self.pg.find_nearest_road(source_lng, source_lat)
+        start_poi_lat, start_poi_lng, start_geom_id, start_on_vertix = self.pg.find_closest_point_on_edge(source_lng, source_lat,
+                                                                                              Flags.CAR.value)
+        end_poi_lat, end_poi_lng, end_geom_id, end_on_vertix = self.pg.find_closest_point_on_edge(target_lng, target_lat,
+                                                                                              Flags.CAR.value)
 
-        target_node = Node(-1, 0, 0, target_lng, target_lat)
-        target_node_a, target_node_b = self.pg.find_nearest_road(target_lng, target_lat)
+        source_node = Node(-1, 0, 0, start_poi_lng, start_poi_lat)
+        target_node = Node(-1, 0, 0, end_poi_lng, end_poi_lat)
 
-        closed_node_dict = {best_node.node_id: best_node,
-                            second_best_node.node_id: second_best_node}
+        if start_on_vertix:
+            start_nodes = self.pg.get_ways(Node(start_geom_id, 0, 0, 0, 0), target_node, Flags.CAR, (start_geom_id,))
+        else:
+            start_nodes = self.pg.find_nearest_road(start_poi_lng, start_poi_lat, start_geom_id)
+
+        if end_on_vertix:
+            end_nodes = self.pg.get_ways(Node(end_geom_id, 0, 0, 0, 0), source_node, Flags.CAR, (end_geom_id,))
+        else:
+            end_nodes = self.pg.find_nearest_road(end_poi_lng, end_poi_lat, end_geom_id)
+
+        source_node_dict = {node.node_id: node for node in start_nodes}
+
+        target_node_dict = {node.node_id: node for node in end_nodes}
+
         source_pq = PriorityQueue()
-        source_pq.put(best_node)
-        source_pq.put(second_best_node)
+        for node in start_nodes:
+            source_pq.put(node)
 
-        target_node_dict = {target_node_a.node_id: target_node_a,
-                            target_node_b.node_id: target_node_b}
         target_pq = PriorityQueue()
-        target_pq.put(target_node_a)
-        target_pq.put(target_node_b)
+        for node in end_nodes:
+            target_pq.put(node)
 
-        notify_queue = Queue(maxsize=2)
+        notify_queue = Queue() # maxsize causing locking, probably race condition
 
-        history_list = [[best_node.serialize(), second_best_node.serialize(), target_node_a.serialize(),
-                         target_node_b.serialize()]] if history else None
+        history_list = [[node.serialize() for node in start_nodes] + [node.serialize() for node in end_nodes]] if history else None
 
         t0 = time()
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            source_future = executor.submit(astar_manager, self.pg, source_pq, notify_queue, closed_node_dict,
+            source_future = executor.submit(astar_manager, self.pg, source_pq, notify_queue, source_node_dict,
                                             target_node, target_node_dict, Flags.CAR, history_list, 3)
             target_future = executor.submit(astar_manager, self.pg, target_pq, notify_queue, target_node_dict,
-                                            source_node, closed_node_dict, Flags.CAR, history_list, 3)
+                                            source_node, source_node_dict, Flags.CAR, history_list, 3)
             node_count = source_future.result() + target_future.result()
         best_node = notify_queue.get()
         middle_node = notify_queue.get()
         t1 = time()
         logger.info(f'Bidirectional A-Star workers time: {round(t1 - t0, 3)}s')
-
-        # target_node.previous = best_node
-        # target_node.cost_minutes = best_node.cost_minutes
-        # best_node = target_node
 
         if history:
             history_list.append([best_node.serialize()])
@@ -150,8 +167,10 @@ class DFOSM:
 
         to_return = {
             'route': self._route_to_str_(route),
-            # 'start_point': route[0].lat + ',' + route[0].lng,
-            'end_point': str(best_node.lat) + ',' + str(best_node.lng),
+            'start_point': str(start_poi_lat) + ',' + str(start_poi_lng),
+            'end_point': str(end_poi_lat) + ',' + str(end_poi_lng),
+            'distance': best_node.get_total_distance(),
+            'time': best_node.cost_minutes,
         }
 
         if history:
@@ -185,8 +204,8 @@ class DFOSM:
         return to_return
 
     # X: longitude, Y: latitude
-    def find_nearest_road(self, x, y):
-        return self.pg.find_nearest_road(x, y)
+    def find_nearest_road(self, x, y, edge_id):
+        return self.pg.find_nearest_road(x, y, edge_id)
 
     @staticmethod
     def _get_route_(node, reverse=True):
