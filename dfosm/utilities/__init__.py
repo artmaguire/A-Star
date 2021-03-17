@@ -1,2 +1,2 @@
 from .pg_helper import PGHelper
-from .tags import Flags
+from .constants import Flags

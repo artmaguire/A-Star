@@ -1,10 +1,9 @@
-import math
-
-
 class Node:
     found_route = False
+    dijkstra = False
 
-    def __init__(self, node_id, previous_cost, initial_cost, lng, lat, km=0, kmh=2, distance=0, previous=None, geojson=None):
+    def __init__(self, node_id, previous_cost, initial_cost, lng, lat, km=0, kmh=2, distance=0, previous=None,
+                 geojson=None):
         self.node_id = node_id
         self.lng = lng
         self.lat = lat
@@ -36,6 +35,9 @@ class Node:
         return self.cost + self.distance_minutes + self.previous.total_cost if self.previous else 0
 
     def cost_modifier(self, initial_cost):
+        if Node.dijkstra:
+            return initial_cost
+
         cost = initial_cost
 
         if self.distance > 3 and self.cost_minutes > 2:
@@ -60,6 +62,9 @@ class Node:
         return cost
 
     def distance_modifier(self):
+        if Node.dijkstra:
+            return 0
+
         if self.previous is None or self.previous.distance <= 0:
             return 0
 
@@ -94,14 +99,14 @@ class Node:
 
     def serialize(self):
         d = {
-            'node_id': self.node_id,
-            'cost': self.cost,
-            'total_cost': self.total_cost,
-            'km': self.km,
-            'kmh': self.kmh,
-            'distance': self.distance,
+            'node_id':          self.node_id,
+            'cost':             self.cost,
+            'total_cost':       self.total_cost,
+            'km':               self.km,
+            'kmh':              self.kmh,
+            'distance':         self.distance,
             'distance_minutes': self.distance_minutes,
-            'geojson': self.geojson
+            'geojson':          self.geojson
         }
         return d
 

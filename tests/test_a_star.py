@@ -14,17 +14,42 @@ class TestAStar:
         cls.config = conf
 
     def setup_method(self):
-        self.dfosm = target.DFOSM(conf.DBNAME, conf.DBUSER, conf.DBPASSWORD, conf.DBHOST, conf.DBPORT, conf.EDGES_TABLE,
+        self.dfosm = target.DFOSM(6, conf.DBNAME, conf.DBUSER, conf.DBPASSWORD, conf.DBHOST, conf.DBPORT,
+                                  conf.EDGES_TABLE,
                                   conf.VERTICES_TABLE)
 
     def teardown_method(self):
         self.dfosm.close_database()
 
+    def test_dijkstra(self):
+        # Lighthouse to Doonbeg
+        # geojson = self.dfosm.a_star(52.614722,-9.776111,52.5595239,-9.9381113, visualisation=False)
+        # Ard na Greine
+        geojson = self.dfosm.dijkstra(52.614722, -9.776111, 52.679167, -9.644167, history=False)
+        # Tullig to Ballylongford
+        # geojson = self.dfosm.a_star(281360, 918311)
+        # Tullig to Kilrush Marina
+        # geojson = self.dfosm.a_star(52.614722, -9.776111, 52.63387335, -9.49417737)
+
+        logger.info(geojson)
+
+        assert geojson is not None
+
+    def test_bi_dijkstra(self):
+        # Lighthouse to Doonbeg
+        # geojson = self.dfosm.a_star(52.614722,-9.776111,52.5595239,-9.9381113, visualisation=False)
+        # Ard na Greine
+        geojson = self.dfosm.bi_dijkstra(52.7082188, -8.8685024, 52.8397697, -8.9796499)
+
+        logger.info(geojson)
+
+        assert geojson is not None
+
     def test_a_star(self):
         # Lighthouse to Doonbeg
         # geojson = self.dfosm.a_star(52.614722,-9.776111,52.5595239,-9.9381113, visualisation=False)
         # Ard na Greine
-        geojson = self.dfosm.a_star(52.614722,-9.776111,52.679167,-9.644167, history=True)
+        geojson = self.dfosm.a_star(52.614722, -9.776111, 52.679167, -9.644167, history=False)
         # Tullig to Ballylongford
         # geojson = self.dfosm.a_star(281360, 918311)
         # Tullig to Kilrush Marina
@@ -39,10 +64,6 @@ class TestAStar:
         # geojson = self.dfosm.a_star(52.614722,-9.776111,52.5595239,-9.9381113, visualisation=False)
         # Ard na Greine
         geojson = self.dfosm.bi_a_star(52.7082188, -8.8685024, 52.8397697, -8.9796499)
-        # Tullig to Ballylongford
-        # geojson = self.dfosm.a_star(281360, 918311)
-        # Tullig to Kilrush Marina
-        # geojson = self.dfosm.a_star(52.614722, -9.776111, 52.63387335, -9.49417737)
 
         logger.info(geojson)
 

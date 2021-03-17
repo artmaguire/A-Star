@@ -2,7 +2,7 @@ import psycopg2
 from psycopg2 import pool
 
 from .. import classes
-from .tags import Flags
+from .constants import Flags
 from .geometry_helper import get_distance
 
 
