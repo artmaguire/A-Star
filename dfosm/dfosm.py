@@ -1,21 +1,24 @@
 import concurrent.futures
 import logging
-from time import time
-
 # from .classes import PriorityQueue
 from queue import PriorityQueue, Queue
+
+import math
+from time import time
+
+from .astar import astar_manager
 from .classes import Node
 from .utilities import Flags
 from .utilities import PGHelper
-from .astar import astar_manager, astar_worker
 
 logger = logging.getLogger(__name__.split(".")[0])
 
 
 class DFOSM:
-    def __init__(self, threads, dbname, dbuser, dbpassword, dbhost='127.0.0.1', dbport=5432, edges_table='edges',
+    def __init__(self, threads=2, timeout=120, dbname='postgres', dbuser='postgres', dbpassword='postgres', dbhost='127.0.0.1', dbport=5432, edges_table='edges',
                  vertices_table='vertices'):
         self.threads = threads
+        self.timeout = timeout
         self.dbname = dbname
         self.dbuser = dbuser
         self.dbpassword = dbpassword
@@ -86,17 +89,30 @@ class DFOSM:
         history_list = [
             [node.serialize() for node in start_nodes] + [node.serialize() for node in end_nodes]] if history else None
 
+        source_threads = math.ceil(self.threads / 2) if _bidirectional_ else self.threads
+
         t0 = time()
         with concurrent.futures.ThreadPoolExecutor() as executor:
             source_future = executor.submit(astar_manager, self.pg, source_pq, notify_queue, source_node_dict,
                                             target_node, target_node_dict, Flags.CAR, history_list,
-                                            int(self.threads / 2) if _bidirectional_ else self.threads)
+                                            source_threads)
             target_future = executor.submit(astar_manager, self.pg, target_pq, notify_queue, target_node_dict,
                                             source_node, source_node_dict, Flags.CAR, history_list,
-                                            int(self.threads / 2) if _bidirectional_ else 0)
-            node_count = source_future.result() + target_future.result()
-        best_node = notify_queue.get()
-        middle_node = notify_queue.get()
+                                            self.threads - source_threads)
+            try:
+                node_count = source_future.result(timeout=self.timeout) + target_future.result(timeout=self.timeout)
+            except concurrent.futures.TimeoutError:
+                logger.error(f'Timeout occurred when trying to calculate route with {self.threads} threads.')
+                notify_queue.put({})
+                return {
+                    'error': {
+                        'code': -1,
+                        'message': 'Timeout when finding route'
+                    }
+                }
+        result = notify_queue.get()
+        best_node = result[0]
+        middle_node = result[1]
         t1 = time()
         logger.info(f'A-Star workers time: {round(t1 - t0, 3)}s')
 

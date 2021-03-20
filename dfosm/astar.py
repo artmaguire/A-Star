@@ -28,8 +28,11 @@ def astar_worker(pg, pq, notify_queue, closed_node_dict, target_node, target_nod
             history_list.append([node.serialize() for node in nodes])
         for node in nodes:
             if node.node_id in target_node_dict:
-                notify_queue.put(node)
-                notify_queue.put(target_node_dict[node.node_id])
+                d = {
+                    0: node,
+                    1: target_node_dict[node.node_id]
+                }
+                notify_queue.put(d, block=False)
                 break
             pq.put(node, block=False)
 
