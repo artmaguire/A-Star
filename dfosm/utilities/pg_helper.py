@@ -44,32 +44,38 @@ class PGHelper:
             cur.execute(query, (node_id,))
             node_tuple = cur.fetchone()
 
-        return classes.Node(node_id, 0, 0, node_tuple[0], node_tuple[1])
+        return classes.Node(node_id=node_id, lng=node_tuple[0], lat=node_tuple[1])
 
-    def get_ways(self, source: classes.Node, target: classes.Node, flag: Flags, closed_set: tuple, conn=None):
+    def get_ways(self, source: classes.Node, target: classes.Node, flag: Flags, closed_set: tuple,
+                 node_options: classes.NodeOptions, reverse_direction: bool, conn=None):
         if conn is None:
             conn = self.conn
         with conn.cursor() as cur:
             query = """
-            SELECT target, x2, y2, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edge WHERE source = %(source)s AND flags & %(flag)s != 0 AND target NOT IN %(closed)s
+            SELECT target, x2, y2, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edge WHERE source = %(source)s AND flags & %(flag)s != 0 AND reverse_cost < %(reverse_cost_source)s AND target NOT IN %(closed)s
             UNION
-            SELECT source, x1, y1, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edge WHERE target = %(source)s AND flags & %(flag)s != 0 AND reverse_cost < 1000000 AND source NOT IN %(closed)s
+            SELECT source, x1, y1, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edge WHERE target = %(source)s AND flags & %(flag)s != 0 AND reverse_cost < %(reverse_cost_target)s AND source NOT IN %(closed)s
             """
 
             # Checks is previous node id is None - Only occurs for first node
+            reverse_cost_source = 1000000 if reverse_direction else 10000000
+            reverse_cost_target = 10000000 if reverse_direction else 1000000
 
             params = {
                 'source': source.node_id,
-                'flag': flag.value,
-                'closed': closed_set
+                'flag':   flag.value,
+                'closed': closed_set,
+                'reverse_cost_source': reverse_cost_source,
+                'reverse_cost_target': reverse_cost_target
             }
 
             cur.execute(query, params)
             ways = cur.fetchall()
 
         nodes = [
-            classes.Node(way[0], source.cost, way[5] * 60, way[1], way[2], km=way[6], kmh=way[7],
-                         distance=get_distance(way[2], way[1], target.lat, target.lng), previous=source, geojson=way[8])
+            classes.Node(node_id=way[0], clazz=way[3], initial_cost=way[5] * 60, lng=way[1], lat=way[2], km=way[6], kmh=way[7],
+                         distance=get_distance(way[2], way[1], target.lat, target.lng), previous=source, geojson=way[8],
+                         node_options=node_options)
             for way in ways]
 
         return nodes
@@ -90,7 +96,7 @@ class PGHelper:
         nodes = []
 
         for node_tuple in node_tuples:
-            node = classes.Node(node_tuple[0], 0, 0, 0, 0, 0, geojson=node_tuple[2])
+            node = classes.Node(node_id=node_tuple[0], geojson=node_tuple[2])
             nodes.append(node)
 
         return nodes[0], nodes[1]

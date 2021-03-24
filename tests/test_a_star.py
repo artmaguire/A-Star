@@ -14,7 +14,7 @@ class TestAStar:
         cls.config = conf
 
     def setup_method(self):
-        self.dfosm = target.DFOSM(6, conf.DBNAME, conf.DBUSER, conf.DBPASSWORD, conf.DBHOST, conf.DBPORT,
+        self.dfosm = target.DFOSM(1, 120, conf.DBNAME, conf.DBUSER, conf.DBPASSWORD, conf.DBHOST, conf.DBPORT,
                                   conf.EDGES_TABLE,
                                   conf.VERTICES_TABLE)
 

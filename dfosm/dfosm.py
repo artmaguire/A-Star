@@ -6,16 +6,19 @@ from queue import PriorityQueue, Queue
 import math
 from time import time
 
-from .astar import astar_manager
+from .classes import NodeOptions
+from .classes import AStarManager
 from .classes import Node
 from .utilities import Flags
 from .utilities import PGHelper
+from .utilities import get_distance
 
 logger = logging.getLogger(__name__.split(".")[0])
 
 
 class DFOSM:
-    def __init__(self, threads=2, timeout=120, dbname='postgres', dbuser='postgres', dbpassword='postgres', dbhost='127.0.0.1', dbport=5432, edges_table='edges',
+    def __init__(self, threads=2, timeout=120, dbname='postgres', dbuser='postgres', dbpassword='postgres',
+                 dbhost='127.0.0.1', dbport=5432, edges_table='edges',
                  vertices_table='vertices'):
         self.threads = threads
         self.timeout = timeout
@@ -33,42 +36,44 @@ class DFOSM:
         self.pg.put_connection()
 
     def dijkstra(self, source_lat, source_lng, target_lat, target_lng, visualisation=False, history=False):
-        Node.dijkstra = True
+        node_options = NodeOptions(True)
         return self.__a_star__(source_lat, source_lng, target_lat, target_lng, visualisation, history,
-                               _bidirectional_=False)
+                               bidirectional=False, node_options=node_options)
 
     def bi_dijkstra(self, source_lat, source_lng, target_lat, target_lng, visualisation=False, history=False):
-        Node.dijkstra = True
+        node_options = NodeOptions(True)
         return self.__a_star__(source_lat, source_lng, target_lat, target_lng, visualisation, history,
-                               _bidirectional_=True)
+                               bidirectional=True, node_options=node_options)
 
     def a_star(self, source_lat, source_lng, target_lat, target_lng, visualisation=False, history=False):
-        Node.dijkstra = False
         return self.__a_star__(source_lat, source_lng, target_lat, target_lng, visualisation, history,
-                               _bidirectional_=False)
+                               bidirectional=False)
 
     def bi_a_star(self, source_lat, source_lng, target_lat, target_lng, visualisation=False, history=False):
-        Node.dijkstra = False
         return self.__a_star__(source_lat, source_lng, target_lat, target_lng, visualisation, history,
-                               _bidirectional_=True)
+                               bidirectional=True)
 
     def __a_star__(self, source_lat, source_lng, target_lat, target_lng, visualisation=False, history=False,
-                   _bidirectional_=True):
+                   bidirectional=True, node_options=NodeOptions()):
         start_poi_lat, start_poi_lng, start_geom_id, start_on_vertix = \
             self.pg.find_closest_point_on_edge(source_lng, source_lat, Flags.CAR.value)
         end_poi_lat, end_poi_lng, end_geom_id, end_on_vertix = \
             self.pg.find_closest_point_on_edge(target_lng, target_lat, Flags.CAR.value)
 
-        source_node = Node(-1, 0, 0, start_poi_lng, start_poi_lat)
-        target_node = Node(-1, 0, 0, end_poi_lng, end_poi_lat)
+        node_options.starting_distance = get_distance(start_poi_lat, start_poi_lng, end_poi_lat, end_poi_lng)
+
+        source_node = Node(lng=start_poi_lng, lat=start_poi_lat)
+        target_node = Node(lng=end_poi_lng, lat=end_poi_lat)
 
         if start_on_vertix:
-            start_nodes = self.pg.get_ways(Node(start_geom_id, 0, 0, 0, 0), target_node, Flags.CAR, (start_geom_id,))
+            start_nodes = self.pg.get_ways(Node(node_id=start_geom_id), target_node, Flags.CAR, (start_geom_id,),
+                                           node_options, False)
         else:
             start_nodes = self.pg.find_nearest_road(start_poi_lng, start_poi_lat, start_geom_id)
 
         if end_on_vertix:
-            end_nodes = self.pg.get_ways(Node(end_geom_id, 0, 0, 0, 0), source_node, Flags.CAR, (end_geom_id,))
+            end_nodes = self.pg.get_ways(Node(node_id=end_geom_id), source_node, Flags.CAR, (end_geom_id,),
+                                         node_options, True)
         else:
             end_nodes = self.pg.find_nearest_road(end_poi_lng, end_poi_lat, end_geom_id)
 
@@ -89,16 +94,18 @@ class DFOSM:
         history_list = [
             [node.serialize() for node in start_nodes] + [node.serialize() for node in end_nodes]] if history else None
 
-        source_threads = math.ceil(self.threads / 2) if _bidirectional_ else self.threads
+        source_threads = math.ceil(self.threads / 2) if bidirectional else self.threads
+        source_manager = AStarManager(self.pg, source_pq, notify_queue, source_node_dict,
+                                      target_node_dict, target_node, Flags.CAR, history_list,
+                                      source_threads, node_options)
+        target_manager = AStarManager(self.pg, target_pq, notify_queue, target_node_dict,
+                                      source_node_dict, source_node, Flags.CAR, history_list,
+                                      self.threads - source_threads, node_options, True)
 
         t0 = time()
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            source_future = executor.submit(astar_manager, self.pg, source_pq, notify_queue, source_node_dict,
-                                            target_node, target_node_dict, Flags.CAR, history_list,
-                                            source_threads)
-            target_future = executor.submit(astar_manager, self.pg, target_pq, notify_queue, target_node_dict,
-                                            source_node, source_node_dict, Flags.CAR, history_list,
-                                            self.threads - source_threads)
+            source_future = executor.submit(source_manager.run)
+            target_future = executor.submit(target_manager.run)
             try:
                 node_count = source_future.result(timeout=self.timeout) + target_future.result(timeout=self.timeout)
             except concurrent.futures.TimeoutError:
@@ -106,7 +113,7 @@ class DFOSM:
                 notify_queue.put({})
                 return {
                     'error': {
-                        'code': -1,
+                        'code':    -1,
                         'message': 'Timeout when finding route'
                     }
                 }
@@ -147,7 +154,6 @@ class DFOSM:
 
     def _get_visualisation_(self, pq):
         branch_routes = []
-        Node.found_route = True
 
         while True:
             if pq.empty():
@@ -158,8 +164,6 @@ class DFOSM:
                       'total_cost': best_branch_node.calculate_total_cost(),
                       'route':      self._route_to_str_(self._get_route_(best_branch_node))}
             branch_routes.append(branch)
-
-        Node.found_route = False
 
         return branch_routes
 
