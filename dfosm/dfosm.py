@@ -35,30 +35,39 @@ class DFOSM:
     def close_database(self):
         self.pg.put_connection()
 
-    def dijkstra(self, source_lat, source_lng, target_lat, target_lng, visualisation=False, history=False):
+    def dijkstra(self, source_lat, source_lng, target_lat, target_lng, flag=Flags.CAR.value, visualisation=False,
+                 history=False):
         node_options = NodeOptions(True)
-        return self.__a_star__(source_lat, source_lng, target_lat, target_lng, visualisation, history,
+        return self.__a_star__(source_lat, source_lng, target_lat, target_lng, flag=flag, visualisation=visualisation,
+                               history=history,
                                bidirectional=False, node_options=node_options)
 
-    def bi_dijkstra(self, source_lat, source_lng, target_lat, target_lng, visualisation=False, history=False):
+    def bi_dijkstra(self, source_lat, source_lng, target_lat, target_lng, flag=Flags.CAR.value, visualisation=False,
+                    history=False):
         node_options = NodeOptions(True)
-        return self.__a_star__(source_lat, source_lng, target_lat, target_lng, visualisation, history,
+        return self.__a_star__(source_lat, source_lng, target_lat, target_lng, flag=flag, visualisation=visualisation,
+                               history=history,
                                bidirectional=True, node_options=node_options)
 
-    def a_star(self, source_lat, source_lng, target_lat, target_lng, visualisation=False, history=False):
-        return self.__a_star__(source_lat, source_lng, target_lat, target_lng, visualisation, history,
+    def a_star(self, source_lat, source_lng, target_lat, target_lng, flag=Flags.CAR.value, visualisation=False,
+               history=False):
+        return self.__a_star__(source_lat, source_lng, target_lat, target_lng, flag=flag, visualisation=visualisation,
+                               history=history,
                                bidirectional=False)
 
-    def bi_a_star(self, source_lat, source_lng, target_lat, target_lng, visualisation=False, history=False):
-        return self.__a_star__(source_lat, source_lng, target_lat, target_lng, visualisation, history,
+    def bi_a_star(self, source_lat, source_lng, target_lat, target_lng, flag=Flags.CAR.value, visualisation=False,
+                  history=False):
+        return self.__a_star__(source_lat, source_lng, target_lat, target_lng, flag=flag, visualisation=visualisation,
+                               history=history,
                                bidirectional=True)
 
-    def __a_star__(self, source_lat, source_lng, target_lat, target_lng, visualisation=False, history=False,
+    def __a_star__(self, source_lat, source_lng, target_lat, target_lng, flag=Flags.CAR.value, visualisation=False,
+                   history=False,
                    bidirectional=True, node_options=NodeOptions()):
         start_poi_lat, start_poi_lng, start_geom_id, start_on_vertix = \
-            self.pg.find_closest_point_on_edge(source_lng, source_lat, Flags.CAR.value)
+            self.pg.find_closest_point_on_edge(source_lng, source_lat, flag)
         end_poi_lat, end_poi_lng, end_geom_id, end_on_vertix = \
-            self.pg.find_closest_point_on_edge(target_lng, target_lat, Flags.CAR.value)
+            self.pg.find_closest_point_on_edge(target_lng, target_lat, flag)
 
         node_options.starting_distance = get_distance(start_poi_lat, start_poi_lng, end_poi_lat, end_poi_lng)
 
@@ -66,13 +75,13 @@ class DFOSM:
         target_node = Node(lng=end_poi_lng, lat=end_poi_lat)
 
         if start_on_vertix:
-            start_nodes = self.pg.get_ways(Node(node_id=start_geom_id), target_node, Flags.CAR, (start_geom_id,),
+            start_nodes = self.pg.get_ways(Node(node_id=start_geom_id), target_node, flag, (start_geom_id,),
                                            node_options, False)
         else:
             start_nodes = self.pg.find_nearest_road(start_poi_lng, start_poi_lat, start_geom_id)
 
         if end_on_vertix:
-            end_nodes = self.pg.get_ways(Node(node_id=end_geom_id), source_node, Flags.CAR, (end_geom_id,),
+            end_nodes = self.pg.get_ways(Node(node_id=end_geom_id), source_node, flag, (end_geom_id,),
                                          node_options, True)
         else:
             end_nodes = self.pg.find_nearest_road(end_poi_lng, end_poi_lat, end_geom_id)
@@ -96,10 +105,10 @@ class DFOSM:
 
         source_threads = math.ceil(self.threads / 2) if bidirectional else self.threads
         source_manager = AStarManager(self.pg, source_pq, notify_queue, source_node_dict,
-                                      target_node_dict, target_node, Flags.CAR, history_list,
+                                      target_node_dict, target_node, flag, history_list,
                                       source_threads, node_options)
         target_manager = AStarManager(self.pg, target_pq, notify_queue, target_node_dict,
-                                      source_node_dict, source_node, Flags.CAR, history_list,
+                                      source_node_dict, source_node, flag, history_list,
                                       self.threads - source_threads, node_options, True)
 
         t0 = time()

@@ -62,9 +62,9 @@ class PGHelper:
             reverse_cost_target = 10000000 if reverse_direction else 1000000
 
             params = {
-                'source': source.node_id,
-                'flag':   flag.value,
-                'closed': closed_set,
+                'source':              source.node_id,
+                'flag':                flag,
+                'closed':              closed_set,
                 'reverse_cost_source': reverse_cost_source,
                 'reverse_cost_target': reverse_cost_target
             }
@@ -72,11 +72,16 @@ class PGHelper:
             cur.execute(query, params)
             ways = cur.fetchall()
 
-        nodes = [
-            classes.Node(node_id=way[0], clazz=way[3], initial_cost=way[5] * 60, lng=way[1], lat=way[2], km=way[6], kmh=way[7],
-                         distance=get_distance(way[2], way[1], target.lat, target.lng), previous=source, geojson=way[8],
-                         node_options=node_options)
-            for way in ways]
+        nodes = []
+        for way in ways:
+            kmh, cost = cost_modifier(flag, way[6], way[7], way[5])
+            nodes.append(
+                    classes.Node(node_id=way[0], clazz=way[3], initial_cost=cost * 60, lng=way[1], lat=way[2],
+                                 km=way[6],
+                                 kmh=kmh,
+                                 distance=get_distance(way[2], way[1], target.lat, target.lng), previous=source,
+                                 geojson=way[8],
+                                 node_options=node_options))
 
         return nodes
 
@@ -100,3 +105,17 @@ class PGHelper:
             nodes.append(node)
 
         return nodes[0], nodes[1]
+
+
+def cost_modifier(flag, km, kmh, cost):
+    BIKE_MAX_SPEED = 30
+    WALK_MAX_SPEED = 5
+
+    if flag == Flags.BIKE.value:
+        if kmh > BIKE_MAX_SPEED:
+            return BIKE_MAX_SPEED, (km / BIKE_MAX_SPEED)
+    elif flag == Flags.FOOT.value:
+        if kmh > WALK_MAX_SPEED:
+            return WALK_MAX_SPEED, (km / WALK_MAX_SPEED)
+
+    return kmh, cost

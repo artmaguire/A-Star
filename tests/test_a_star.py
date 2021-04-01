@@ -25,7 +25,8 @@ class TestAStar:
         # Lighthouse to Doonbeg
         # geojson = self.dfosm.a_star(52.614722,-9.776111,52.5595239,-9.9381113, visualisation=False)
         # Ard na Greine
-        geojson = self.dfosm.dijkstra(52.614722, -9.776111, 52.679167, -9.644167, history=False)
+        geojson = self.dfosm.dijkstra(52.614722, -9.776111, 52.5595239, -9.9381113, target.Flags.BIKE.value,
+                                      history=False)
         # Tullig to Ballylongford
         # geojson = self.dfosm.a_star(281360, 918311)
         # Tullig to Kilrush Marina
@@ -39,7 +40,7 @@ class TestAStar:
         # Lighthouse to Doonbeg
         # geojson = self.dfosm.a_star(52.614722,-9.776111,52.5595239,-9.9381113, visualisation=False)
         # Ard na Greine
-        geojson = self.dfosm.bi_dijkstra(52.7082188, -8.8685024, 52.8397697, -8.9796499)
+        geojson = self.dfosm.bi_dijkstra(52.7082188, -8.8685024, 52.8397697, -8.9796499, target.Flags.BIKE.value)
 
         logger.info(geojson)
 
@@ -49,7 +50,8 @@ class TestAStar:
         # Lighthouse to Doonbeg
         # geojson = self.dfosm.a_star(52.614722,-9.776111,52.5595239,-9.9381113, visualisation=False)
         # Ard na Greine
-        geojson = self.dfosm.a_star(52.614722, -9.776111, 52.679167, -9.644167, history=False)
+        geojson = self.dfosm.a_star(52.590097,-9.829157, 52.569728, -9.862732, target.Flags.BIKE.value,
+                                    history=False)
         # Tullig to Ballylongford
         # geojson = self.dfosm.a_star(281360, 918311)
         # Tullig to Kilrush Marina
