@@ -10,7 +10,7 @@ from .classes import NodeOptions
 from .classes import AStarManager
 from .classes import Node
 from .utilities import Flags
-from .utilities import PGHelper
+from .classes import PGHelper
 from .utilities import get_distance
 
 logger = logging.getLogger(__name__.split(".")[0])
@@ -109,7 +109,9 @@ class DFOSM:
                                       source_threads, node_options)
         target_manager = AStarManager(self.pg, target_pq, notify_queue, target_node_dict,
                                       source_node_dict, source_node, flag, history_list,
-                                      self.threads - source_threads, node_options, True)
+                                      self.threads - source_threads, node_options, reverse_direction=True)
+
+        logger.debug(f'Using {source_threads} source threads, and {self.threads - source_threads} target threads')
 
         t0 = time()
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -157,7 +159,70 @@ class DFOSM:
 
         return to_return
 
+    def all_roads(self, source_lat, source_lng, flag=Flags.CAR.value, timeout=3600, history=False,
+                  node_options=NodeOptions()):
+        start_poi_lat, start_poi_lng, start_geom_id, start_on_vertix = \
+            self.pg.find_closest_point_on_edge(source_lng, source_lat, flag)
+
+        node_options.starting_distance = 0
+        node_options.dijkstra = True
+
+        source_node = Node(lng=start_poi_lng, lat=start_poi_lat)
+
+        if start_on_vertix:
+            start_nodes = self.pg.get_ways(Node(node_id=start_geom_id), source_node, flag, (start_geom_id,),
+                                           node_options, False)
+        else:
+            start_nodes = self.pg.find_nearest_road(start_poi_lng, start_poi_lat, start_geom_id)
+
+        source_node_dict = {node.node_id: node for node in start_nodes}
+
+        source_pq = PriorityQueue()
+        for node in start_nodes:
+            source_pq.put(node)
+
+        notify_queue = Queue()  # maxsize causing locking, probably race condition
+
+        history_list = [
+            [node.serialize() for node in start_nodes]] if history else None
+
+        source_threads = self.threads
+        source_manager = AStarManager(self.pg, source_pq, notify_queue, source_node_dict,
+                                      {}, source_node, flag, history_list,
+                                      source_threads, node_options)
+
+        t0 = time()
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            source_future = executor.submit(source_manager.run)
+            try:
+                node_count = source_future.result(timeout=timeout)
+            except concurrent.futures.TimeoutError:
+                logger.error(f'Timeout occurred when trying to calculate route with {self.threads} threads.')
+                notify_queue.put({})
+                return {
+                    'error': {
+                        'code':    -1,
+                        'message': 'Timeout when finding route'
+                    }
+                }
+
+        t1 = time()
+        logger.info(f'A-Star workers time: {round(t1 - t0, 3)}s')
+
+        to_return = {'start_point': {"lat": start_poi_lat, "lng": start_poi_lng}, 'branch': self._get_visualisation_(
+                source_pq)}
+
+        # if history:
+        #     history_list.append([best_node.serialize()])
+        #     to_return['history'] = history_list
+
+        logger.info('******************************************************')
+        logger.info(f'Total Nodes Searched: {node_count}')
+
+        return to_return
+
     # X: longitude, Y: latitude
+
     def find_nearest_road(self, x, y, edge_id):
         return self.pg.find_nearest_road(x, y, edge_id)
 

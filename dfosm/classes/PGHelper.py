@@ -1,9 +1,9 @@
 import psycopg2
 from psycopg2 import pool
 
-from .. import classes
-from .constants import Flags
-from .geometry_helper import get_distance
+from dfosm import classes
+from ..utilities.constants import Flags
+from ..utilities.geometry_helper import get_distance
 
 
 class PGHelper:
@@ -47,14 +47,14 @@ class PGHelper:
         return classes.Node(node_id=node_id, lng=node_tuple[0], lat=node_tuple[1])
 
     def get_ways(self, source: classes.Node, target: classes.Node, flag: Flags, closed_set: tuple,
-                 node_options: classes.NodeOptions, reverse_direction: bool, conn=None):
+                 node_options: classes.NodeOptions, reverse_direction: bool, min_speed=0, max_speed=300, conn=None):
         if conn is None:
             conn = self.conn
         with conn.cursor() as cur:
             query = """
-            SELECT target, x2, y2, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edge WHERE source = %(source)s AND flags & %(flag)s != 0 AND reverse_cost < %(reverse_cost_source)s AND target NOT IN %(closed)s
+            SELECT target, x2, y2, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edge WHERE source = %(source)s AND flags & %(flag)s != 0 AND reverse_cost < %(reverse_cost_source)s AND target NOT IN %(closed)s AND kmh > %(min_speed)s AND kmh < %(max_speed)s
             UNION
-            SELECT source, x1, y1, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edge WHERE target = %(source)s AND flags & %(flag)s != 0 AND reverse_cost < %(reverse_cost_target)s AND source NOT IN %(closed)s
+            SELECT source, x1, y1, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edge WHERE target = %(source)s AND flags & %(flag)s != 0 AND reverse_cost < %(reverse_cost_target)s AND source NOT IN %(closed)s AND kmh > %(min_speed)s AND kmh < %(max_speed)s
             """
 
             # Checks is previous node id is None - Only occurs for first node
@@ -66,7 +66,9 @@ class PGHelper:
                 'flag':                flag,
                 'closed':              closed_set,
                 'reverse_cost_source': reverse_cost_source,
-                'reverse_cost_target': reverse_cost_target
+                'reverse_cost_target': reverse_cost_target,
+                'min_speed':           min_speed,
+                'max_speed':           max_speed
             }
 
             cur.execute(query, params)

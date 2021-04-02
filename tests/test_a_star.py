@@ -50,7 +50,7 @@ class TestAStar:
         # Lighthouse to Doonbeg
         # geojson = self.dfosm.a_star(52.614722,-9.776111,52.5595239,-9.9381113, visualisation=False)
         # Ard na Greine
-        geojson = self.dfosm.a_star(52.590097,-9.829157, 52.569728, -9.862732, target.Flags.BIKE.value,
+        geojson = self.dfosm.a_star(52.590097, -9.829157, 52.569728, -9.862732, target.Flags.BIKE.value,
                                     history=False)
         # Tullig to Ballylongford
         # geojson = self.dfosm.a_star(281360, 918311)
@@ -66,6 +66,14 @@ class TestAStar:
         # geojson = self.dfosm.a_star(52.614722,-9.776111,52.5595239,-9.9381113, visualisation=False)
         # Ard na Greine
         geojson = self.dfosm.bi_a_star(52.7082188, -8.8685024, 52.8397697, -8.9796499)
+
+        logger.info(geojson)
+
+        assert geojson is not None
+
+    def test_all_roads(self):
+        # Lighthouse to Doonbeg
+        geojson = self.dfosm.all_roads(52.614722, -9.776111, 1, 3600)
 
         logger.info(geojson)
 
