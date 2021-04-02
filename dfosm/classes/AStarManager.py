@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__.split(".")[0])
 
 class AStarManager:
     def __init__(self, pg, pq, notify_queue, closed_node_dict, target_node_dict, target_node, flag=1, history_list=None,
-                 workers=6, node_options=NodeOptions(), min_speed=0, max_speed=300, reverse_direction=False):
+                 workers=6, node_options=NodeOptions(), min_clazz=256, reverse_direction=False):
         self.pg = pg
         self.pq = pq
         self.notify_queue = notify_queue
@@ -21,8 +21,7 @@ class AStarManager:
         self.history_list = history_list
         self.workers = workers
         self.node_options = node_options
-        self.min_speed = min_speed
-        self.max_speed = max_speed
+        self.min_clazz = min_clazz
         self.reverse_direction = reverse_direction
 
     def run(self):
@@ -42,14 +41,15 @@ class AStarManager:
                 logger.debug(f'Priority Queue is empty. Worker {idx} quitting.')
                 break
             self.closed_node_dict[best_node.node_id] = best_node
-            if best_node.cost_minutes > 30:
-                break
+
+            # To keep it within 20 kilometers from limerick
+            # if best_node.cost_minutes > 30:
+            #     break
 
             # logger.debug(best_node.__str__())
 
             nodes = self.pg.get_ways(best_node, self.target_node, self.flag, tuple(self.closed_node_dict),
-                                     self.node_options, self.reverse_direction, min_speed=self.min_speed,
-                                     max_speed=self.max_speed, conn=conn)
+                                     self.node_options, self.reverse_direction, min_clazz=self.min_clazz, conn=conn)
 
             if self.history_list:
                 self.history_list.append([node.serialize() for node in nodes])

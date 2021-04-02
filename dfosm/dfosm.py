@@ -189,7 +189,7 @@ class DFOSM:
         source_threads = self.threads
         source_manager = AStarManager(self.pg, source_pq, notify_queue, source_node_dict,
                                       {}, source_node, flag, history_list,
-                                      source_threads, node_options, 50)
+                                      source_threads, node_options, 22)
 
         t0 = time()
         with concurrent.futures.ThreadPoolExecutor() as executor:
