@@ -73,7 +73,7 @@ class TestAStar:
 
     def test_all_roads(self):
         # Lighthouse to Doonbeg
-        geojson = self.dfosm.all_roads(52.614722, -9.776111, 1, 3600)
+        geojson = self.dfosm.all_roads(52.65507480, -8.68632353, 1, 3600, history=True)
 
         logger.info(geojson)
 

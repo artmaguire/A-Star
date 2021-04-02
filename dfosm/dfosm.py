@@ -189,7 +189,7 @@ class DFOSM:
         source_threads = self.threads
         source_manager = AStarManager(self.pg, source_pq, notify_queue, source_node_dict,
                                       {}, source_node, flag, history_list,
-                                      source_threads, node_options)
+                                      source_threads, node_options, 50)
 
         t0 = time()
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -212,8 +212,8 @@ class DFOSM:
         to_return = {'start_point': {"lat": start_poi_lat, "lng": start_poi_lng}, 'branch': self._get_visualisation_(
                 source_pq)}
 
-        with open('../all_roads/all_roads.json', 'w') as f:
-            f.write(str(to_return['branch']))
+        with open('../all_roads/all_roads.js', 'w') as f:
+            f.write(str(history_list))
 
         # if history:
         #     history_list.append([best_node.serialize()])

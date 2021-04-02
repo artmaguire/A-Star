@@ -52,9 +52,9 @@ class PGHelper:
             conn = self.conn
         with conn.cursor() as cur:
             query = """
-            SELECT target, x2, y2, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edge WHERE source = %(source)s AND flags & %(flag)s != 0 AND reverse_cost < %(reverse_cost_source)s AND target NOT IN %(closed)s AND kmh > %(min_speed)s AND kmh < %(max_speed)s
+            SELECT target, x2, y2, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edge WHERE source = %(source)s AND flags & %(flag)s != 0 AND reverse_cost < %(reverse_cost_source)s AND target NOT IN %(closed)s AND kmh >= %(min_speed)s AND kmh <= %(max_speed)s
             UNION
-            SELECT source, x1, y1, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edge WHERE target = %(source)s AND flags & %(flag)s != 0 AND reverse_cost < %(reverse_cost_target)s AND source NOT IN %(closed)s AND kmh > %(min_speed)s AND kmh < %(max_speed)s
+            SELECT source, x1, y1, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edge WHERE target = %(source)s AND flags & %(flag)s != 0 AND reverse_cost < %(reverse_cost_target)s AND source NOT IN %(closed)s AND kmh >= %(min_speed)s AND kmh <=%(max_speed)s
             """
 
             # Checks is previous node id is None - Only occurs for first node
