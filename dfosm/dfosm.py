@@ -212,6 +212,9 @@ class DFOSM:
         to_return = {'start_point': {"lat": start_poi_lat, "lng": start_poi_lng}, 'branch': self._get_visualisation_(
                 source_pq)}
 
+        with open('../all_roads/all_roads.json', 'w') as f:
+            f.write(str(to_return['branch']))
+
         # if history:
         #     history_list.append([best_node.serialize()])
         #     to_return['history'] = history_list

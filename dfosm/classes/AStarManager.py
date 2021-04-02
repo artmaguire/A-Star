@@ -42,6 +42,8 @@ class AStarManager:
                 logger.debug(f'Priority Queue is empty. Worker {idx} quitting.')
                 break
             self.closed_node_dict[best_node.node_id] = best_node
+            if best_node.cost_minutes > 30:
+                break
 
             # logger.debug(best_node.__str__())
 
