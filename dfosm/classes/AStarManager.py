@@ -43,8 +43,8 @@ class AStarManager:
             self.closed_node_dict[best_node.node_id] = best_node
 
             # To keep it within 20 kilometers from limerick
-            # if best_node.cost_minutes > 30:
-            #     break
+            if best_node.cost_minutes > 60:
+                break
 
             # logger.debug(best_node.__str__())
 

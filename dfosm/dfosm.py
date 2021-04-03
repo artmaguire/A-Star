@@ -137,11 +137,13 @@ class DFOSM:
         route = self._get_route_(best_node) + self._get_route_(middle_node)
 
         to_return = {
-            'route':       self._route_to_str_(route),
-            'start_point': {"lat": start_poi_lat, "lng": start_poi_lng},
-            'end_point':   {"lat": end_poi_lat, "lng": end_poi_lng},
-            'distance':    best_node.get_total_distance() + middle_node.get_total_distance(),
-            'time':        best_node.cost_minutes + middle_node.cost_minutes,
+            'route':        route,
+            'source_point': {"lat": source_lat, "lng": source_lng},
+            'target_point': {"lat": target_lat, "lng": target_lng},
+            'start_point':  {"lat": start_poi_lat, "lng": start_poi_lng},
+            'end_point':    {"lat": end_poi_lat, "lng": end_poi_lng},
+            'distance':     best_node.get_total_distance() + middle_node.get_total_distance(),
+            'time':         best_node.cost_minutes + middle_node.cost_minutes,
         }
 
         if history:
@@ -189,7 +191,7 @@ class DFOSM:
         source_threads = self.threads
         source_manager = AStarManager(self.pg, source_pq, notify_queue, source_node_dict,
                                       {}, source_node, flag, history_list,
-                                      source_threads, node_options, 22)
+                                      source_threads, node_options, 16)
 
         t0 = time()
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -212,7 +214,7 @@ class DFOSM:
         to_return = {'start_point': {"lat": start_poi_lat, "lng": start_poi_lng}, 'branch': self._get_visualisation_(
                 source_pq)}
 
-        with open('all_roads/all_roads.json', 'w') as f:
+        with open('../all_roads/all_roads.json', 'w') as f:
             f.write(str(history_list))
 
         # if history:
@@ -239,7 +241,7 @@ class DFOSM:
             branch = {'cost':       best_branch_node.cost,
                       'distance':   best_branch_node.distance,
                       'total_cost': best_branch_node.calculate_total_cost(),
-                      'route':      self._route_to_str_(self._get_route_(best_branch_node))}
+                      'route':      self._get_route_(best_branch_node)}
             branch_routes.append(branch)
 
         return branch_routes

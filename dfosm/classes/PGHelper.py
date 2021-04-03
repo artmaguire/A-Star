@@ -1,3 +1,5 @@
+import json
+
 import psycopg2
 from psycopg2 import pool
 
@@ -81,7 +83,7 @@ class PGHelper:
                                  km=way[6],
                                  kmh=kmh,
                                  distance=get_distance(way[2], way[1], target.lat, target.lng), previous=source,
-                                 geojson=way[8],
+                                 geojson=json.loads(way[8]),
                                  node_options=node_options))
 
         return nodes
