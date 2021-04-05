@@ -15,8 +15,7 @@ class TestAStar:
 
     def setup_method(self):
         self.dfosm = target.DFOSM(6, 120, conf.DBNAME, conf.DBUSER, conf.DBPASSWORD, conf.DBHOST, conf.DBPORT,
-                                  conf.EDGES_TABLE,
-                                  conf.VERTICES_TABLE)
+                                  conf.EDGES_TABLE, conf.VERTICES_TABLE)
 
     def teardown_method(self):
         self.dfosm.close_database()
@@ -73,7 +72,7 @@ class TestAStar:
 
     def test_all_roads(self):
         # Lighthouse to Doonbeg
-        geojson = self.dfosm.all_roads(52.65507480, -8.68632353, 1, 3600, history=True)
+        geojson = self.dfosm.all_roads(53.356661, -6.384206, 1, 3600, history=True)
 
         logger.info(geojson)
 

@@ -42,10 +42,6 @@ class AStarManager:
                 break
             self.closed_node_dict[best_node.node_id] = best_node
 
-            # To keep it within 20 kilometers from limerick
-            if best_node.cost_minutes > 60:
-                break
-
             # logger.debug(best_node.__str__())
 
             nodes = self.pg.get_ways(best_node, self.target_node, self.flag, tuple(self.closed_node_dict),
@@ -70,3 +66,51 @@ class AStarManager:
 
         self.pg.put_connection(conn)
         return node_count
+
+
+def all_roads_worker(pg, pq, end_nodes_pq, closed_node_dict, target_node, flag=1,
+                     history_list=None, node_options=NodeOptions(), min_clazz=256, reverse_direction=False):
+    conn = pg.get_connection()
+    node_count = 0
+    end_nodes_dict = {}
+
+    while True:
+        try:
+            best_node = pq.get(timeout=5)
+        except queue.Empty:
+            logger.debug(f'Priority Queue is empty. Worker quitting.')
+            break
+        closed_node_dict[best_node.node_id] = best_node
+
+        # To keep it within 20 kilometers from limerick
+        # if best_node.cost_minutes > 120:
+        #     break
+
+        # logger.debug(best_node.__str__())
+
+        nodes = pg.get_ways(best_node, target_node, flag, (1,),
+                            node_options, reverse_direction, min_clazz=min_clazz, conn=conn)
+
+        if history_list:
+            history_list.append([node.serialize() for node in nodes])
+
+        if not nodes:
+            end_nodes_dict[best_node.node_id] = best_node
+            end_nodes_pq.put(best_node, block=False)
+
+        for node in nodes:
+            # closed_node_dict[node.node_id] = node
+            if node.node_id in closed_node_dict:
+                continue
+
+            if node.node_id in end_nodes_dict:
+                end_nodes_dict[best_node.node_id] = best_node
+                end_nodes_pq.put(best_node, block=False)
+                continue
+
+            pq.put(node, block=False)
+
+        node_count += 1
+
+    pg.put_connection(conn)
+    return node_count

@@ -8,6 +8,7 @@ from time import time
 
 from .classes import NodeOptions
 from .classes import AStarManager
+from .classes import all_roads_worker
 from .classes import Node
 from .utilities import Flags
 from .classes import PGHelper
@@ -179,28 +180,23 @@ class DFOSM:
 
         source_node_dict = {node.node_id: node for node in start_nodes}
 
-        source_pq = PriorityQueue()
+        pq = PriorityQueue()
+        end_nodes_pq = PriorityQueue()
         for node in start_nodes:
-            source_pq.put(node)
-
-        notify_queue = Queue()  # maxsize causing locking, probably race condition
+            pq.put(node)
 
         history_list = [
             [node.serialize() for node in start_nodes]] if history else None
 
-        source_threads = self.threads
-        source_manager = AStarManager(self.pg, source_pq, notify_queue, source_node_dict,
-                                      {}, source_node, flag, history_list,
-                                      source_threads, node_options, 16)
-
         t0 = time()
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            source_future = executor.submit(source_manager.run)
+            futures = [executor.submit(
+                    all_roads_worker, self.pg, pq, end_nodes_pq, source_node_dict, source_node, flag, history_list,
+                    node_options, 22) for _ in range(self.threads)]
             try:
-                node_count = source_future.result(timeout=timeout)
+                node_count = sum(f.result() for f in futures)
             except concurrent.futures.TimeoutError:
                 logger.error(f'Timeout occurred when trying to calculate route with {self.threads} threads.')
-                notify_queue.put({})
                 return {
                     'error': {
                         'code':    -1,
@@ -212,10 +208,10 @@ class DFOSM:
         logger.info(f'A-Star workers time: {round(t1 - t0, 3)}s')
 
         to_return = {'start_point': {"lat": start_poi_lat, "lng": start_poi_lng}, 'branch': self._get_visualisation_(
-                source_pq)}
+                end_nodes_pq)}
 
         with open('../all_roads/all_roads.json', 'w') as f:
-            f.write(str(history_list))
+            f.write(str(to_return['branch']))
 
         # if history:
         #     history_list.append([best_node.serialize()])
