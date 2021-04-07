@@ -104,7 +104,7 @@ class PGHelper:
         nodes = []
 
         for node_tuple in node_tuples:
-            node = classes.Node(node_id=node_tuple[0], geojson=node_tuple[2])
+            node = classes.Node(node_id=node_tuple[0], geojson=json.loads(node_tuple[2]))
             nodes.append(node)
 
         return nodes[0], nodes[1]

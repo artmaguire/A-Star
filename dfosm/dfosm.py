@@ -192,7 +192,7 @@ class DFOSM:
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [executor.submit(
                     all_roads_worker, self.pg, pq, end_nodes_pq, source_node_dict, source_node, flag, history_list,
-                    node_options, 22) for _ in range(self.threads)]
+                    node_options, 32) for _ in range(self.threads)]
             try:
                 node_count = sum(f.result() for f in futures)
             except concurrent.futures.TimeoutError:
@@ -210,8 +210,16 @@ class DFOSM:
         to_return = {'start_point': {"lat": start_poi_lat, "lng": start_poi_lng}, 'branch': self._get_visualisation_(
                 end_nodes_pq)}
 
+        all_roads_geojson = {"type": "FeatureCollection", "features": []}
+
+        for b in to_return['branch']:
+            for route in b['route']:
+                all_roads_geojson['features'].append({"type": "Feature", "properties": {}, "geometry": route})
+
+        # print(all_roads_geojson)
+
         with open('../all_roads/all_roads.json', 'w') as f:
-            f.write(str(to_return['branch']))
+            f.write(str(all_roads_geojson))
 
         # if history:
         #     history_list.append([best_node.serialize()])
