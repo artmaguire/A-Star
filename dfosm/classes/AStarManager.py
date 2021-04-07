@@ -83,7 +83,7 @@ def all_roads_worker(pg, pq, end_nodes_pq, closed_node_dict, target_node, flag=1
         closed_node_dict[best_node.node_id] = best_node
 
         # To keep it within 20 kilometers from limerick
-        # if best_node.cost_minutes > 120:
+        # if best_node.cost_minutes > 60:
         #     break
 
         # logger.debug(best_node.__str__())

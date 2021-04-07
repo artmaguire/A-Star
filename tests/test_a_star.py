@@ -62,18 +62,16 @@ class TestAStar:
 
     def test_bi_a_star(self):
         # Lighthouse to Doonbeg
-        # geojson = self.dfosm.a_star(52.614722,-9.776111,52.5595239,-9.9381113, visualisation=False)
+        geojson = self.dfosm.a_star(52.614722, -9.776111, 52.5595239, -9.9381113, visualisation=False)
         # Ard na Greine
-        geojson = self.dfosm.bi_a_star(52.7082188, -8.8685024, 52.8397697, -8.9796499)
+        # geojson = self.dfosm.bi_a_star(52.7082188, -8.8685024, 52.8397697, -8.9796499)
 
         logger.info(geojson)
 
         assert geojson is not None
 
     def test_all_roads(self):
-        # Lighthouse to Doonbeg
-        geojson = self.dfosm.all_roads(53.356661, -6.384206, 1, 3600, history=True)
-
+        geojson = self.dfosm.all_roads(53.3183424, -6.3682900, 1, 3600, history=True)
         logger.info(geojson)
 
         assert geojson is not None
