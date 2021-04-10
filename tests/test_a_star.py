@@ -1,6 +1,6 @@
 import logging
 
-from config import conf
+from .config import conf
 
 target = __import__("dfosm")
 
