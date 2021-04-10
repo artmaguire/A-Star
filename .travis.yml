@@ -6,3 +6,13 @@ install:
   - poetry install
 script:
   - poetry build
+deploy:
+  # Github
+  - provider: releases
+    api_key:
+      secure: "Q6elmngQV3Y2/O7homS05fEWYEGkXt7kv0Wkg9VkU3DcJ1GSy6iiQicMcRbjajvaFw+Ty+NUNiMZ7Dgh2g+LKdsK2XnFNK2GGdk6qUPKINSmKlEo/KRpBmhdE+0gMYJ4FkHLu27ayA4XoZ3vcrsNWMHmAs5DZSP23NuSf3b+yoLj41MvDN1IlwXY88C2MVuS4l1W7lHA1tHzNN4i/my9YO4DYfaFDYAaWWlPscZhZtazwsul8Rvssjew+TaRw4wPd8irtBaivJI1ApUjJEdjZekEJQOSaNUPT18L9OdH9yFZC8CLw3yisrovcdX2OSK+dC7N0fr1W1KFZKv9HHg6lnVHaQ8CzRNl12qdnIN97BMZG+omCZVsY+MTBzyFGEbF5xnikGbaQ1kJaH8bS/SkK++C6qQBh4Ac3CHSCJ8byR7RKdonNW0NMEZzb6gv9zBgOQ6h6pifYY26hBzCnusv9LVuGMjPkl3zW1+lHRq5IrWrQlQK8m2EgVrn4/8tnnyH6wftK1pSAz8ukMliqF/uEYnlD5B1MDcMJkRXh5tmf994s7PSXxiLbhPCJVPDgQ4WdSSSGrra6wad+nveTMqh2QK5Pnc8WqeALGsvov/eg5mYCL41r9zllg8gyD4ovOo7WhfkZPKYo6ffl4kBR1ntGn495RI5MooKnBa7Gt2hINc="
+    file_glob: true
+    file: "deps/dfosm-*.whl"
+    skip_cleanup: true
+    on:
+      tags: true
