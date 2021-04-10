@@ -5,6 +5,7 @@ venv/
 __pycache__/
 dist/
 logs/
+public/
 
 .coverage*
 poetry.lock
