@@ -6,13 +6,16 @@ install:
   - poetry install
 script:
   - poetry build
+before_deploy:
+  - export RELEASE_WHL_FILE=$(ls dist/*.whl)
+  - echo "deploying $RELEASE_WHL_FILE to GitHub releases"
 deploy:
   # Github
   - provider: releases
     api_key:
       secure: "R0g6MYM6Egw29WFXRfD8j2ZbcXuW6c/wR0DgxgzrTnPym24slQIhcMANadiA6V/yVGcCBUw3Xh6FFkCoNhQKz6/peIz5IFrowIiDTwpZhW9IKJrcXv5OIlovldHXHpoTUYTKBgrkJuX8wt6gHztQnVDj5UEskXGdyGlmAJyEhUKxs1oq4MbDmCgR0DdzHEm0q+H8wrSxQOULFKiiu5siPxcJ9puu+q+7l7uebAjBDlTVoldqmfSRP+52YU6TU4ctHDa1HG/NnGE54TiRZlTmxCcFGg5SwE6OIuTPzAD0ZxFkIH7oQloG4KScuL0Bigv+uJo/XfQAz+DWtAxJN6QVCt3FPvmTzssM+v4Bkgm6POF2LNl/JWnDuidyAc5f+CwKQj4124vLEAH1KGg6t3brEZMbwe7RjArzbaHddqUczS/djLupLk7a2cfbLix37pnVYSYtj9r4gHkuFvCBLwvUMYHMfGtxp1nC4ac7aw03oAnWFWwl6Js37KMiCy+9h+bkkBKA+7WFjQDoiOAn98TIx1cqsRbkpANxMCdIsg+IP+gCEReysf5p0I/zpM75L29SeWBYeb5zdhjN5IoE1tB9x8xwtjjKhrGz3W5POlEV2itw0D1oP0XvPszZLD5Jo2DhLkMdcQ5ApkXSCD4RSHeUP5hmkWEsMu3AQWUv5a006Ds="
     file_glob: true
-    file: "deps/dfosm-*.whl"
+    file: ${RELEASE_WHL_FILE}
     skip_cleanup: true
     on:
       tags: true
