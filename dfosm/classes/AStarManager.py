@@ -1,5 +1,4 @@
 import concurrent.futures
-
 import logging
 import queue
 
@@ -34,6 +33,8 @@ class AStarManager:
         logger.debug(f'Worker: {idx} starting')
         conn = self.pg.get_connection()
         node_count = 0
+        end_count = 0
+
         while True:
             try:
                 best_node = self.pq.get(timeout=5)
@@ -51,15 +52,18 @@ class AStarManager:
                 self.history_list.append([node.serialize() for node in nodes])
             for node in nodes:
                 if node.node_id in self.target_node_dict:
-                    d = {
-                        0: node,
-                        1: self.target_node_dict[node.node_id]
-                    }
+                    d = (
+                        node,
+                        self.target_node_dict[node.node_id]
+                    )
                     self.notify_queue.put(d, block=False)
                     break
                 self.pq.put(node, block=False)
 
             if not self.notify_queue.empty():
+                end_count += 1
+
+            if end_count > 30:
                 break
 
             node_count += 1

@@ -6,12 +6,12 @@ from queue import PriorityQueue, Queue
 import math
 from time import time
 
-from .classes import NodeOptions
 from .classes import AStarManager
-from .classes import all_roads_worker
 from .classes import Node
-from .utilities import Flags
+from .classes import NodeOptions
 from .classes import PGHelper
+from .classes import all_roads_worker
+from .utilities import Flags
 from .utilities import get_distance
 
 logger = logging.getLogger(__name__.split(".")[0])
@@ -129,7 +129,17 @@ class DFOSM:
                         'message': 'Timeout when finding route'
                     }
                 }
-        result = notify_queue.get()
+        logger.info(f'{notify_queue.qsize()} potential route(s) found.')
+
+        result = {}
+
+        while not notify_queue.empty():
+            r = notify_queue.get()
+            if not result:
+                result = r
+            if r[0].cost_minutes + r[1].cost_minutes < result[0].cost_minutes + result[1].cost_minutes:
+                result = r
+
         best_node = result[0]
         middle_node = result[1]
         t1 = time()
