@@ -28,13 +28,14 @@ class Node:
 
         return self.km + self.previous.get_total_distance()
 
+    def get_total_cost(self):
+        if not self.previous:
+            return self.calculate_total_cost()
+
+        return self.calculate_total_cost() + self.previous.calculate_total_cost()
+
     def calculate_total_cost(self):
-        # if self.cost < -self.distance_modifier():
-        #     print(round(self.cost, 6), round(self.km, 6), self.kmh, round(self.distance, 6),
-        #           round(self.previous.distance, 6) if self.previous else 0, round(self.distance_modifier(), 6),
-        #           self.lat, self.lng, self.previous.lat, self.previous.lng,
-        #           sep='  -  ')
-        return self.cost + self.distance_minutes + self.previous.total_cost if self.previous else 0
+        return self.cost + self.distance_minutes  # + self.previous.total_cost if self.previous else 0
 
     def cost_modifier(self, initial_cost):
         if self.node_options.dijkstra:
@@ -69,25 +70,6 @@ class Node:
                     cost *= 100
             else:
                 cost *= 5
-
-        # if self.distance > 3 and self.cost_minutes > 2:
-        #     # cost *= 90 / self.kmh
-        #     if self.kmh >= 100:
-        #         cost *= 0.4
-        #     if self.kmh >= 120:
-        #         cost *= 0.2
-        #     if self.kmh <= 80:
-        #         cost *= 1
-        #     if self.kmh <= 50:
-        #         cost *= 2
-        #     if self.kmh < 40:
-        #         cost *= 100
-        #
-        # if self.cost_minutes < 8 and self.kmh > 30:
-        #     cost /= 5
-        #
-        # if self.distance < 1 and self.kmh > 10:
-        #     cost /= 10
 
         return cost
 
@@ -127,18 +109,6 @@ class Node:
                 if self.kmh <= 80:
                     delta *= 1
 
-        # if self.distance > 3 and self.cost_minutes > 2:
-        #     # Lessen the punishment / reward on fast roads to avoid getting stuck on a long bend / ring road
-        #     if self.kmh >= 100:
-        #         delta *= 0.5
-        #     if self.kmh >= 120:
-        #         delta *= 0.4
-        #     if self.kmh <= 80:
-        #         delta *= 1
-        #
-        # if self.cost_minutes < 5:
-        #     delta *= 0.5
-
         return delta
 
     def get_previous(self):
@@ -158,7 +128,7 @@ class Node:
         d = {
             'node_id':          self.node_id,
             'cost':             self.cost,
-            'total_cost':       self.total_cost,
+            'total_cost':       self.get_total_cost(),
             'km':               self.km,
             'kmh':              self.kmh,
             'distance':         self.distance,
@@ -168,10 +138,12 @@ class Node:
         return d
 
     def __str__(self) -> str:
-        return str(self.serialize())
+        d = self.serialize()
+        del d['geojson']
+        return str(d)
 
     def __lt__(self, other):
-        return self.total_cost < other.total_cost
+        return self.get_total_cost() < other.get_total_cost()
 
 
 def __eq__(self, other):
