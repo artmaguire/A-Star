@@ -66,6 +66,7 @@ class AStarManager:
                         existing_node.previous = best_node
                         existing_node.cost_minutes = node.cost_minutes
                         existing_node.total_cost = node.total_cost
+                        existing_node.geojson = node.geojson
                     continue  # Don't add to priority queue, already been seen
 
                 self.pq.put(node, block=False)
