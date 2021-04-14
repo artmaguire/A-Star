@@ -1,9 +1,10 @@
 from .NodeOptions import NodeOptions
+from ..weighting.CarWeightor import CarWeightor
 
 
 class Node:
     def __init__(self, node_id=-1, clazz=0, initial_cost=0, lng=0, lat=0, km=0, kmh=2, distance=0, previous=None,
-                 geojson=None, node_options=NodeOptions()):
+                 geojson=None, node_options=NodeOptions(), weighting=CarWeightor()):
         self.node_id = node_id
         self.clazz = clazz
         self.lng = lng
@@ -17,8 +18,9 @@ class Node:
         self.initial_cost = initial_cost
         self.cost_minutes = initial_cost + self.previous.cost_minutes if self.previous else 0
 
-        self.cost = self.cost_modifier(initial_cost)
-        self.distance_minutes = self.distance_modifier()
+        self.cost = weighting.cost_modifier(self)
+        self.distance_minutes = weighting.distance_modifier(self)
+
         self.total_cost = self.calculate_total_cost()
 
         self.visited = False
@@ -37,107 +39,6 @@ class Node:
 
     def calculate_total_cost(self):
         return self.cost + self.distance_minutes  # + self.previous.total_cost if self.previous else 0
-
-    def cost_modifier(self, initial_cost):
-        if self.node_options.dijkstra:
-            return initial_cost
-
-        cost = initial_cost
-
-        if self.cost_minutes < 1:
-            return cost / 10
-
-        # Start
-        if self.cost_minutes < 8:
-            if self.clazz < 30 or self.clazz == 43:
-                cost /= 3
-            else:
-                cost *= 3
-        # End
-        elif self.distance < 8:
-            if self.clazz < 30 or self.clazz == 43:
-                cost /= 3
-            else:
-                cost *= 3
-        # Middle End
-        elif (self.distance / self.node_options.starting_distance) > .5:
-            if self.clazz < 30 or self.clazz == 43:
-                if self.kmh >= 120:
-                    cost *= 0.4
-                elif self.kmh >= 100:
-                    cost *= 0.5
-                else:
-                    cost *= 1
-        # Middle Start
-        else:
-            if self.clazz <= 22 or self.clazz == 43:
-                if self.kmh >= 120:
-                    cost *= 0.2
-                elif self.kmh >= 100:
-                    cost *= 0.4
-                elif self.kmh >= 80:
-                    cost *= 0.6
-                elif self.kmh >= 50:
-                    cost *= 0.8
-                else:
-                    cost *= 100
-            else:
-                cost *= 5
-
-        # if cost == 0.014238:
-        #     print(self.node_id)
-        #     pass
-
-        return cost
-
-    def distance_modifier(self):
-        if self.node_options.dijkstra:
-            return 0
-
-        if self.previous is None or self.previous.distance <= 0:
-            return 0
-
-        delta = ((self.distance - self.previous.distance) / self.kmh) * 60
-
-        if self.cost_minutes < 1:
-            return 0
-
-        # Start
-        # if self.cost_minutes < 8:
-        #     if self.clazz < 30 or self.clazz == 43:
-        #         delta /= 3
-        # End
-        elif self.distance < 8:
-            if self.clazz < 30 or self.clazz == 43:
-                delta /= 3
-            else:
-                delta *= 3
-        # Middle End
-        elif (self.distance / self.node_options.starting_distance) > .5:
-            if self.clazz < 30 or self.clazz == 43:
-                if self.kmh >= 120:
-                    delta *= 0.5
-                elif self.kmh >= 100:
-                    delta *= 0.6
-                else:
-                    delta *= 1
-        # Middle Start
-        else:
-            if self.clazz <= 22 or self.clazz == 43:
-                if self.kmh >= 120:
-                    delta *= 0.3
-                elif self.kmh >= 100:
-                    delta *= 0.6
-                elif self.kmh >= 80:
-                    delta *= 0.6
-                elif self.kmh >= 50:
-                    delta *= 0.8
-                else:
-                    delta *= 100
-            else:
-                delta *= 5
-
-        return delta
 
     def get_previous(self):
         if self.visited is True:
