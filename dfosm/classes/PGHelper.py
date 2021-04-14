@@ -6,7 +6,6 @@ from psycopg2 import pool
 from dfosm import classes
 from ..utilities.constants import Flags
 from ..utilities.geometry_helper import get_distance
-from ..weighting.WeightorFactory import WeightorFactory
 
 
 class PGHelper:
@@ -79,15 +78,13 @@ class PGHelper:
         nodes = []
         for way in ways:
             kmh, cost = cost_modifier(flag, way[6], way[7], way[5])
-            weightor = WeightorFactory.create_weightor(flag=flag)
             nodes.append(
                     classes.Node(node_id=way[0], clazz=way[3], initial_cost=cost * 60, lng=way[1], lat=way[2],
                                  km=way[6],
                                  kmh=kmh,
                                  distance=get_distance(way[2], way[1], target.lat, target.lng), previous=source,
                                  geojson=json.loads(way[8]),
-                                 node_options=node_options,
-                                 weighting=weightor))
+                                 node_options=node_options))
 
         return nodes
 

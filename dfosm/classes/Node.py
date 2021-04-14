@@ -1,10 +1,9 @@
 from .NodeOptions import NodeOptions
-from ..weighting.CarWeightor import CarWeightor
 
 
 class Node:
     def __init__(self, node_id=-1, clazz=0, initial_cost=0, lng=0, lat=0, km=0, kmh=2, distance=0, previous=None,
-                 geojson=None, node_options=NodeOptions(), weighting=CarWeightor()):
+                 geojson=None, node_options=NodeOptions()):
         self.node_id = node_id
         self.clazz = clazz
         self.lng = lng
@@ -18,8 +17,8 @@ class Node:
         self.initial_cost = initial_cost
         self.cost_minutes = initial_cost + self.previous.cost_minutes if self.previous else 0
 
-        self.cost = weighting.cost_modifier(self)
-        self.distance_minutes = weighting.distance_modifier(self)
+        self.cost = self.node_options.weightor.cost_modifier(self) if self.node_options.weightor else 0
+        self.distance_minutes = self.node_options.weightor.distance_modifier(self) if self.node_options.weightor else 0
 
         self.total_cost = self.calculate_total_cost()
 
