@@ -14,6 +14,7 @@ class Node:
         self.previous = previous
         self.geojson = geojson
         self.node_options = node_options
+        self.initial_cost = initial_cost
         self.cost_minutes = initial_cost + self.previous.cost_minutes if self.previous else 0
 
         self.cost = self.cost_modifier(initial_cost)
@@ -43,6 +44,9 @@ class Node:
 
         cost = initial_cost
 
+        if self.cost_minutes < 1:
+            return cost / 10
+
         # Start
         if self.cost_minutes < 8:
             if self.clazz < 30 or self.clazz == 43:
@@ -55,21 +59,34 @@ class Node:
                 cost /= 3
             else:
                 cost *= 3
-        # Middle section
-        else:
-            if self.clazz < 20 or self.clazz == 43:
-                if self.kmh >= 100:
+        # Middle End
+        elif (self.distance / self.node_options.starting_distance) > .5:
+            if self.clazz < 30 or self.clazz == 43:
+                if self.kmh >= 120:
                     cost *= 0.4
+                elif self.kmh >= 100:
+                    cost *= 0.5
+                else:
+                    cost *= 1
+        # Middle Start
+        else:
+            if self.clazz <= 22 or self.clazz == 43:
                 if self.kmh >= 120:
                     cost *= 0.2
-                if self.kmh <= 80:
-                    cost *= 1
-                if self.kmh <= 50:
-                    cost *= 2
-                if self.kmh < 40:
+                elif self.kmh >= 100:
+                    cost *= 0.4
+                elif self.kmh >= 80:
+                    cost *= 0.6
+                elif self.kmh >= 50:
+                    cost *= 0.8
+                else:
                     cost *= 100
             else:
                 cost *= 5
+
+        # if cost == 0.014238:
+        #     print(self.node_id)
+        #     pass
 
         return cost
 
@@ -82,32 +99,43 @@ class Node:
 
         delta = ((self.distance - self.previous.distance) / self.kmh) * 60
 
+        if self.cost_minutes < 1:
+            return 0
+
         # Start
-        if self.cost_minutes < 8:
-            if self.clazz < 30 or self.clazz == 43:
-                delta /= 3
+        # if self.cost_minutes < 8:
+        #     if self.clazz < 30 or self.clazz == 43:
+        #         delta /= 3
         # End
         elif self.distance < 8:
             if self.clazz < 30 or self.clazz == 43:
                 delta /= 3
-        # End
+            else:
+                delta *= 3
+        # Middle End
         elif (self.distance / self.node_options.starting_distance) > .5:
-            if self.clazz < 20 or self.clazz == 43:
-                if self.kmh >= 100:
-                    delta *= 0.5
+            if self.clazz < 30 or self.clazz == 43:
                 if self.kmh >= 120:
-                    delta *= 0.4
-                if self.kmh <= 80:
+                    delta *= 0.5
+                elif self.kmh >= 100:
+                    delta *= 0.6
+                else:
                     delta *= 1
-        # Middle section
+        # Middle Start
         else:
-            if self.clazz < 20 or self.clazz == 43:
-                if self.kmh >= 100:
-                    delta *= 0.5
+            if self.clazz <= 22 or self.clazz == 43:
                 if self.kmh >= 120:
-                    delta *= 0.4
-                if self.kmh <= 80:
-                    delta *= 1
+                    delta *= 0.3
+                elif self.kmh >= 100:
+                    delta *= 0.6
+                elif self.kmh >= 80:
+                    delta *= 0.6
+                elif self.kmh >= 50:
+                    delta *= 0.8
+                else:
+                    delta *= 100
+            else:
+                delta *= 5
 
         return delta
 
@@ -127,8 +155,11 @@ class Node:
     def serialize(self):
         d = {
             'node_id':          self.node_id,
+            'clazz':            self.clazz,
+            'initial_cost':     self.initial_cost,
             'cost':             self.cost,
             'total_cost':       self.get_total_cost(),
+            'cost_minutes':     self.cost_minutes,
             'km':               self.km,
             'kmh':              self.kmh,
             'distance':         self.distance,

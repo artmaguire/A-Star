@@ -119,6 +119,7 @@ class DFOSM:
             source_future = executor.submit(source_manager.run)
             target_future = executor.submit(target_manager.run)
             try:
+                logger.error(self.timeout)
                 node_count = source_future.result(timeout=self.timeout) + target_future.result(timeout=self.timeout)
             except concurrent.futures.TimeoutError:
                 logger.error(f'Timeout occurred when trying to calculate route with {self.threads} threads.')
