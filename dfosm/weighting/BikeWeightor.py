@@ -3,9 +3,6 @@ from ..classes import Node
 
 
 class BikeWeightor(Weightor):
-    def __init__(self):
-        pass
-
     def cost_modifier(self, node: Node):
         if node.node_options.dijkstra:
             return node.initial_cost
