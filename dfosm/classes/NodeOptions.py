@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
-from ..weighting import Weightor
+from ..weighting import Weighter
 
 
 @dataclass
 class NodeOptions:
     dijkstra: bool = False
     starting_distance: float = 0
-    weightor: Weightor = None
+    weightor: Weighter = None

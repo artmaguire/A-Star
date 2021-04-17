@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 from ..classes import Node
 
 
-class Weightor(metaclass=ABCMeta):
+class Weighter(metaclass=ABCMeta):
     @abstractmethod
     def cost_modifier(self, node: Node):
         pass

@@ -13,7 +13,7 @@ from .classes import PGHelper
 from .classes import all_roads_worker
 from .utilities import Flags
 from .utilities import get_distance
-from .weighting import WeightorFactory
+from .weighting import WeighterFactory
 
 logger = logging.getLogger(__name__.split(".")[0])
 
@@ -39,7 +39,7 @@ class DFOSM:
 
     def dijkstra(self, source_lat, source_lng, target_lat, target_lng, flag=Flags.CAR.value, visualisation=False,
                  history=False):
-        weightor = WeightorFactory.create_weightor(flag)
+        weightor = WeighterFactory.create_weightor(flag)
         node_options = NodeOptions(True, 0, weightor)
         return self.__a_star__(source_lat, source_lng, target_lat, target_lng, flag=flag, visualisation=visualisation,
                                history=history,
@@ -48,7 +48,7 @@ class DFOSM:
 
     def bi_dijkstra(self, source_lat, source_lng, target_lat, target_lng, flag=Flags.CAR.value, visualisation=False,
                     history=False):
-        weightor = WeightorFactory.create_weightor(flag)
+        weightor = WeighterFactory.create_weightor(flag)
         node_options = NodeOptions(True, 0, weightor)
         return self.__a_star__(source_lat, source_lng, target_lat, target_lng, flag=flag, visualisation=visualisation,
                                history=history,
@@ -57,7 +57,7 @@ class DFOSM:
 
     def a_star(self, source_lat, source_lng, target_lat, target_lng, flag=Flags.CAR.value, visualisation=False,
                history=False):
-        weightor = WeightorFactory.create_weightor(flag)
+        weightor = WeighterFactory.create_weighter(flag)
         node_options = NodeOptions(False, 0, weightor)
         return self.__a_star__(source_lat, source_lng, target_lat, target_lng, flag=flag, visualisation=visualisation,
                                history=history,
@@ -66,7 +66,7 @@ class DFOSM:
 
     def bi_a_star(self, source_lat, source_lng, target_lat, target_lng, flag=Flags.CAR.value, visualisation=False,
                   history=False):
-        weightor = WeightorFactory.create_weightor(flag)
+        weightor = WeighterFactory.create_weighter(flag)
         node_options = NodeOptions(False, 0, weightor)
         return self.__a_star__(source_lat, source_lng, target_lat, target_lng, flag=flag, visualisation=visualisation,
                                history=history,

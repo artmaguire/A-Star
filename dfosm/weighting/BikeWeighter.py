@@ -1,8 +1,8 @@
-from .Weightor import Weightor
+from .Weighter import Weighter
 from ..classes import Node
 
 
-class WalkWeightor(Weightor):
+class BikeWeighter(Weighter):
     def cost_modifier(self, node: Node):
         if node.node_options.dijkstra:
             return node.initial_cost
