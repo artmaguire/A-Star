@@ -27,23 +27,21 @@ class WalkWeighter(Weighter):
         # Middle End
         elif (node.distance / node.node_options.starting_distance) > .5:
             if node.clazz < 30 or node.clazz == 43:
-                if node.kmh >= 120:
-                    cost *= 0.4
-                elif node.kmh >= 100:
-                    cost *= 0.5
+                if node.kmh >= 100:
+                    cost *= 0.2
+                elif node.kmh >= 80:
+                    cost *= 0.3
                 else:
                     cost *= 1
         # Middle Start
         else:
             if node.clazz <= 22 or node.clazz == 43:
-                if node.kmh >= 120:
-                    cost *= 0.2
-                elif node.kmh >= 100:
-                    cost *= 0.4
+                if node.kmh >= 100:
+                    cost *= 0.1
                 elif node.kmh >= 80:
-                    cost *= 0.6
+                    cost *= 0.2
                 elif node.kmh >= 50:
-                    cost *= 0.8
+                    cost *= 0.3
                 else:
                     cost *= 100
             else:
@@ -80,23 +78,23 @@ class WalkWeighter(Weighter):
         # Middle End
         elif (node.distance / node.node_options.starting_distance) > .5:
             if node.clazz < 30 or node.clazz == 43:
-                if node.kmh >= 120:
-                    delta *= 0.5
-                elif node.kmh >= 100:
-                    delta *= 0.6
+                if node.kmh >= 100:
+                    delta *= 0.1
+                elif node.kmh >= 80:
+                    delta *= 0.15
+                elif node.kmh >= 50:
+                    delta *= 0.2
                 else:
                     delta *= 1
         # Middle Start
         else:
             if node.clazz <= 22 or node.clazz == 43:
-                if node.kmh >= 120:
-                    delta *= 0.3
-                elif node.kmh >= 100:
-                    delta *= 0.6
+                if node.kmh >= 100:
+                    delta *= 0.1
                 elif node.kmh >= 80:
-                    delta *= 0.6
+                    delta *= 0.15
                 elif node.kmh >= 50:
-                    delta *= 0.8
+                    delta *= 0.2
                 else:
                     delta *= 100
             else:
