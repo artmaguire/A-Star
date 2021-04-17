@@ -44,6 +44,13 @@ class AStarManager:
                 logger.warning(f'Priority Queue is empty. Worker {idx} quitting.')
                 break
 
+            if best_node.node_id in self.target_node_dict:
+                d = (
+                    best_node,
+                    self.target_node_dict[best_node.node_id]['node']
+                )
+                self.notify_queue.put(d, block=False)
+
             closed_node_dict = tuple(self.closed_node_dict[best_node.node_id]['neighbours'])
 
             nodes = self.pg.get_ways(best_node, self.target_node, self.flag, tuple(closed_node_dict),
@@ -52,13 +59,6 @@ class AStarManager:
             if self.history_list:
                 self.history_list.append([node.serialize() for node in nodes])
             for node in nodes:
-                if node.node_id in self.target_node_dict:
-                    d = (
-                        node,
-                        self.target_node_dict[node.node_id]['node']
-                    )
-                    self.notify_queue.put(d, block=False)
-
                 if node.node_id in self.closed_node_dict:
                     self.closed_node_dict[node.node_id]['neighbours'].append(best_node.node_id)
                     existing_node = self.closed_node_dict[node.node_id]['node']
