@@ -53,7 +53,7 @@ class AStarManager:
 
             closed_node_dict = tuple(self.closed_node_dict[best_node.node_id]['neighbours'])
 
-            nodes = self.pg.get_ways(best_node, self.target_node, self.flag, tuple(closed_node_dict),
+            nodes = self.pg.get_ways(best_node, self.target_node, self.flag, closed_node_dict,
                                      self.node_options, self.reverse_direction, min_clazz=self.min_clazz, conn=conn)
 
             if self.history_list:
@@ -83,7 +83,7 @@ class AStarManager:
 
             node_count += 1
 
-            if not (node_count % 10000):
+            if not (node_count % 1000):
                 logger.debug(f'Worker {idx} has checked {node_count} nodes after {(time() - t0):.2f}s.')
 
         self.pg.put_connection(conn)

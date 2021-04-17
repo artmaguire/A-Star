@@ -13,18 +13,18 @@ logger.setLevel(logging.INFO)
 class TestKnownRoutes:
     known_routes_short = [
         {'start_name': 'Tullig', 'end_name': 'Kilrush', 'start_lat': 52.614722, 'start_lng': -9.776111,
-         'end_lat': 52.6397222, 'end_lng': -9.4833283, 'target_time': 20, 'target_distance': 27},
+         'end_lat': 52.6397222, 'end_lng': -9.4833283, 'target_time': 21, 'target_distance': 27},
         {'start_name': 'Tullig', 'end_name': 'Ennis', 'start_lat': 52.614722, 'start_lng': -9.776111,
-         'end_lat': 52.8435152, 'end_lng': -8.983747, 'target_time': 47, 'target_distance': 69},
+         'end_lat': 52.8435152, 'end_lng': -8.983747, 'target_time': 48, 'target_distance': 69},
         {'start_name': 'Ard Na Greine', 'end_name': 'Ard Na Greine', 'start_lat': 52.7082188, 'start_lng': -8.8685024,
-         'end_lat': 52.8397697, 'end_lng': -8.9796499, 'target_time': 13, 'target_distance': 21},
+         'end_lat': 52.8397697, 'end_lng': -8.9796499, 'target_time': 14, 'target_distance': 21},
     ]
 
     known_routes_long = [
         {'start_name': 'Limerick', 'end_name': 'Cork', 'start_lat': 52.6593646, 'start_lng': -8.62311436,
-         'end_lat': 51.89864135, 'end_lng': -8.51376165, 'target_time': 68, 'target_distance': 101},
+         'end_lat': 51.89864135, 'end_lng': -8.51376165, 'target_time': 69, 'target_distance': 101},
         {'start_name': 'Limerick', 'end_name': 'Maynooth', 'start_lat': 52.6593646, 'start_lng': -8.62311436,
-         'end_lat': 53.38553995, 'end_lng': -6.59743538, 'target_time': 128, 'target_distance': 214}
+         'end_lat': 53.38553995, 'end_lng': -6.59743538, 'target_time': 132, 'target_distance': 214}
     ]
 
     @classmethod
