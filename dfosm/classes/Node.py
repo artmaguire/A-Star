@@ -26,8 +26,6 @@ class Node:
         if not self.previous:
             return self.km
 
-        print(self.previous.node_id)
-
         return self.km + self.previous.get_total_distance()
 
     def get_total_cost(self):

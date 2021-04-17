@@ -60,21 +60,21 @@ class AStarManager:
                     self.notify_queue.put(d, block=False)
 
                 if node.node_id in self.closed_node_dict:
-                    existing_node = self.closed_node_dict[node.node_id]['node']
-                    # if node.get_total_cost() < existing_node.get_total_cost():
-                    #     logger.debug(f'Worker {idx} found a better branch: {existing_node} -> {node}')
-                    #     existing_node.previous = best_node
-                    #     existing_node.cost_minutes = node.cost_minutes
-                    #     existing_node.total_cost = node.total_cost
-                    #     existing_node.geojson = node.geojson
-                    continue  # Don't add to priority queue, already been seen
-
-                if node.node_id in self.closed_node_dict:
                     self.closed_node_dict[node.node_id]['neighbours'].append(best_node.node_id)
+                    existing_node = self.closed_node_dict[node.node_id]['node']
+                    if node.cost_minutes < existing_node.cost_minutes:
+                        logger.debug(f'Worker {idx} found a better branch: {existing_node} -> {node}')
+                        existing_node.previous = best_node
+                        existing_node.cost = node.cost
+                        existing_node.cost_minutes = node.cost_minutes
+                        existing_node.distance_minutes = node.distance_minutes
+                        existing_node.total_cost = node.total_cost
+                        existing_node.km = node.km
+                        existing_node.kmh = node.kmh
+                        existing_node.geojson = node.geojson
                 else:
                     self.closed_node_dict[node.node_id] = {'node': node, 'neighbours': [best_node.node_id]}
-
-                self.pq.put(node, block=False)
+                    self.pq.put(node, block=False)
 
             if not self.notify_queue.empty():
                 end_count += 1

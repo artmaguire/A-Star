@@ -158,7 +158,7 @@ class DFOSM:
             'target_point': {"lat": target_lat, "lng": target_lng},
             'start_point': {"lat": start_poi_lat, "lng": start_poi_lng},
             'end_point': {"lat": end_poi_lat, "lng": end_poi_lng},
-            # 'distance': best_node.get_total_distance() + middle_node.get_total_distance(),
+            'distance': best_node.get_total_distance() + middle_node.get_total_distance(),
             'time': best_node.cost_minutes + middle_node.cost_minutes,
         }
 
@@ -172,7 +172,7 @@ class DFOSM:
         logger.info('******************************************************')
         logger.info(f'Total Nodes Searched: {node_count}')
         logger.info(f'Nodes In Route: {len(route)}')
-        # logger.info(f'Estimated distance: {best_node.get_total_distance() + middle_node.get_total_distance():.2f}km')
+        logger.info(f'Estimated distance: {best_node.get_total_distance() + middle_node.get_total_distance():.2f}km')
         logger.info(f'Estimated Time: {best_node.cost_minutes + middle_node.cost_minutes:.2f}m')
 
         return to_return

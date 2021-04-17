@@ -24,7 +24,7 @@ class TestAStar:
         # Lighthouse to Doonbeg
         # geojson = self.dfosm.a_star(52.614722,-9.776111,52.5595239,-9.9381113, visualisation=False)
         # Ard na Greine
-        geojson = self.dfosm.dijkstra(52.614722, -9.776111, 53.34412, -6.26813, target.Flags.CAR.value,
+        geojson = self.dfosm.dijkstra(52.6775720781452, -9.65252457304991, 52.6775040848784, -9.64621193058725, target.Flags.CAR.value,
                                       history=False)
         # Tullig to Ballylongford
         # geojson = self.dfosm.a_star(281360, 918311)
