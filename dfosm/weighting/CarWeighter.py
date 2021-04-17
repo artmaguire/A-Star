@@ -9,11 +9,11 @@ class CarWeighter(Weighter):
 
         cost = node.initial_cost
 
-        if node.cost_minutes < 1:
+        if node.get_cost_minutes() < 1:
             return cost / 10
 
         # Start
-        if node.cost_minutes < 8 and node.clazz > 14:
+        if node.get_cost_minutes() < 8 and node.clazz > 14:
             if node.clazz < 30 or node.clazz == 43:
                 cost /= 3
             else:
@@ -66,7 +66,7 @@ class CarWeighter(Weighter):
 
         delta = ((node.distance - node.previous.distance) / node.kmh) * 60
 
-        if node.cost_minutes < 1:
+        if node.get_cost_minutes() < 1:
             return 0
 
         # Start

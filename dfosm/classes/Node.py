@@ -15,7 +15,6 @@ class Node:
         self.geojson = geojson
         self.node_options = node_options
         self.initial_cost = initial_cost
-        self.cost_minutes = initial_cost + self.previous.cost_minutes if self.previous else 0
 
         self.cost = self.cost_modifier()
         self.distance_minutes = self.distance_modifier()
@@ -35,6 +34,12 @@ class Node:
             return 0
 
         return self.node_options.weighter.distance_modifier(self)
+
+    def get_cost_minutes(self):
+        if not self.previous:
+            return self.initial_cost
+
+        return self.initial_cost + self.previous.get_cost_minutes()
 
     def get_total_distance(self):
         if not self.previous:
@@ -71,7 +76,7 @@ class Node:
             'initial_cost':     self.initial_cost,
             'cost':             self.cost,
             'total_cost':       self.get_total_cost(),
-            'cost_minutes':     self.cost_minutes,
+            'cost_minutes':     self.get_cost_minutes(),
             'km':               self.km,
             'kmh':              self.kmh,
             'distance':         self.distance,

@@ -62,11 +62,10 @@ class AStarManager:
                 if node.node_id in self.closed_node_dict:
                     self.closed_node_dict[node.node_id]['neighbours'].append(best_node.node_id)
                     existing_node = self.closed_node_dict[node.node_id]['node']
-                    if node.cost_minutes < existing_node.cost_minutes:
+                    if node.get_cost_minutes() < existing_node.get_cost_minutes():
                         logger.debug(f'Worker {idx} found a better branch: {existing_node} -> {node}')
                         existing_node.previous = best_node
                         existing_node.cost = node.cost
-                        existing_node.cost_minutes = node.cost_minutes
                         existing_node.distance_minutes = node.distance_minutes
                         existing_node.total_cost = node.total_cost
                         existing_node.km = node.km

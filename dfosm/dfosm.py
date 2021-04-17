@@ -156,7 +156,8 @@ class DFOSM:
             r = notify_queue.get()
             if not result:
                 result = r
-            if r[0].cost_minutes + r[1].cost_minutes < result[0].cost_minutes + result[1].cost_minutes:
+            if r[0].get_cost_minutes() + r[1].get_cost_minutes() < result[0].get_cost_minutes() +\
+                    result[1].get_cost_minutes():
                 result = r
 
         best_node = result[0]
@@ -173,7 +174,7 @@ class DFOSM:
             'start_point': {"lat": start_poi_lat, "lng": start_poi_lng},
             'end_point': {"lat": end_poi_lat, "lng": end_poi_lng},
             'distance': best_node.get_total_distance() + middle_node.get_total_distance(),
-            'time': best_node.cost_minutes + middle_node.cost_minutes,
+            'time': best_node.get_cost_minutes() + middle_node.get_cost_minutes(),
         }
 
         if history:
@@ -187,7 +188,7 @@ class DFOSM:
         logger.info(f'Total Nodes Searched: {node_count}')
         logger.info(f'Nodes In Route: {len(route)}')
         logger.info(f'Estimated distance: {best_node.get_total_distance() + middle_node.get_total_distance():.2f}km')
-        logger.info(f'Estimated Time: {best_node.cost_minutes + middle_node.cost_minutes:.2f}m')
+        logger.info(f'Estimated Time: {best_node.get_cost_minutes() + middle_node.get_cost_minutes():.2f}m')
 
         return to_return
 
