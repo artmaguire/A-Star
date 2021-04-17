@@ -7,4 +7,4 @@ from ..weighting import Weighter
 class NodeOptions:
     dijkstra: bool = False
     starting_distance: float = 0
-    weightor: Weighter = None
+    weighter: Weighter = None

@@ -17,12 +17,24 @@ class Node:
         self.initial_cost = initial_cost
         self.cost_minutes = initial_cost + self.previous.cost_minutes if self.previous else 0
 
-        self.cost = self.node_options.weightor.cost_modifier(self) if self.node_options.weightor else 0
-        self.distance_minutes = self.node_options.weightor.distance_modifier(self) if self.node_options.weightor else 0
+        self.cost = self.cost_modifier()
+        self.distance_minutes = self.distance_modifier()
 
         self.total_cost = self.calculate_total_cost()
 
         self.visited = False
+
+    def cost_modifier(self):
+        if self.node_options.dijkstra or not self.node_options.weighter:
+            return self.initial_cost
+
+        return self.node_options.weighter.cost_modifier(self)
+
+    def distance_modifier(self):
+        if self.node_options.dijkstra or not self.node_options.weighter:
+            return 0
+
+        return self.node_options.weighter.distance_modifier(self)
 
     def get_total_distance(self):
         if not self.previous:
@@ -34,10 +46,10 @@ class Node:
         if not self.previous:
             return self.calculate_total_cost()
 
-        return self.calculate_total_cost() + self.previous.calculate_total_cost()
+        return self.calculate_total_cost() + self.previous.get_total_cost()
 
     def calculate_total_cost(self):
-        return self.cost + self.distance_minutes  # + self.previous.total_cost if self.previous else 0
+        return self.cost + self.distance_minutes
 
     def get_previous(self):
         if self.visited is True:
