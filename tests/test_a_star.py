@@ -14,7 +14,7 @@ class TestAStar:
         cls.config = conf
 
     def setup_method(self):
-        self.dfosm = target.DFOSM(6, 120, conf.DBNAME, conf.DBUSER, conf.DBPASSWORD, conf.DBHOST, conf.DBPORT,
+        self.dfosm = target.DFOSM(12, 3600, conf.DBNAME, conf.DBUSER, conf.DBPASSWORD, conf.DBHOST, conf.DBPORT,
                                   conf.EDGES_TABLE, conf.VERTICES_TABLE)
 
     def teardown_method(self):
@@ -24,7 +24,7 @@ class TestAStar:
         # Lighthouse to Doonbeg
         # geojson = self.dfosm.a_star(52.614722,-9.776111,52.5595239,-9.9381113, visualisation=False)
         # Ard na Greine
-        geojson = self.dfosm.dijkstra(52.614722, -9.776111, 52.5595239, -9.9381113, target.Flags.BIKE.value,
+        geojson = self.dfosm.dijkstra(52.614722, -9.776111, 53.34412, -6.26813, target.Flags.CAR.value,
                                       history=False)
         # Tullig to Ballylongford
         # geojson = self.dfosm.a_star(281360, 918311)
@@ -49,7 +49,7 @@ class TestAStar:
         # Lighthouse to Doonbeg
         # geojson = self.dfosm.a_star(52.614722,-9.776111,52.5595239,-9.9381113, visualisation=False)
         # Ard na Greine
-        geojson = self.dfosm.a_star(52.61638, -9.78134, 52.637107, -9.486786, target.Flags.CAR.value,
+        geojson = self.dfosm.a_star(52.616040, -9.789661, 52.639389, -9.483535, target.Flags.CAR.value,
                                     history=False)
         # Tullig to Ballylongford
         # geojson = self.dfosm.a_star(281360, 918311)

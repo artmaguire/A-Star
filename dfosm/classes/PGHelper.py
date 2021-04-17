@@ -59,7 +59,6 @@ class PGHelper:
             SELECT source, x1, y1, clazz, flags, cost, km, kmh, st_asgeojson(geom_way) FROM ie_edge WHERE target = %(source)s AND flags & %(flag)s != 0 AND reverse_cost < %(reverse_cost_target)s AND source NOT IN %(closed)s AND clazz <= %(min_clazz)s
             """
 
-            # Checks is previous node id is None - Only occurs for first node
             reverse_cost_source = 1000000 if reverse_direction else 10000000
             reverse_cost_target = 10000000 if reverse_direction else 1000000
 

@@ -1,6 +1,7 @@
 import concurrent.futures
 import logging
 import queue
+from time import time
 
 from .NodeOptions import NodeOptions
 
@@ -34,18 +35,18 @@ class AStarManager:
         conn = self.pg.get_connection()
         node_count = 0
         end_count = 0
+        t0 = time()
 
         while True:
             try:
                 best_node = self.pq.get(timeout=5)
             except queue.Empty:
-                logger.debug(f'Priority Queue is empty. Worker {idx} quitting.')
+                logger.warning(f'Priority Queue is empty. Worker {idx} quitting.')
                 break
-            self.closed_node_dict[best_node.node_id] = best_node
 
-            # logger.debug(best_node.__str__())
+            closed_node_dict = tuple(self.closed_node_dict[best_node.node_id]['neighbours'])
 
-            nodes = self.pg.get_ways(best_node, self.target_node, self.flag, tuple(self.closed_node_dict),
+            nodes = self.pg.get_ways(best_node, self.target_node, self.flag, tuple(closed_node_dict),
                                      self.node_options, self.reverse_direction, min_clazz=self.min_clazz, conn=conn)
 
             if self.history_list:
@@ -54,20 +55,24 @@ class AStarManager:
                 if node.node_id in self.target_node_dict:
                     d = (
                         node,
-                        self.target_node_dict[node.node_id]
+                        self.target_node_dict[node.node_id]['node']
                     )
                     self.notify_queue.put(d, block=False)
-                    break
 
                 if node.node_id in self.closed_node_dict:
-                    existing_node = self.closed_node_dict[node.node_id]
-                    if node.get_total_cost() < existing_node.get_total_cost():
-                        logger.debug(f'Worker {idx} found a better branch: {existing_node} -> {node}')
-                        existing_node.previous = best_node
-                        existing_node.cost_minutes = node.cost_minutes
-                        existing_node.total_cost = node.total_cost
-                        existing_node.geojson = node.geojson
+                    existing_node = self.closed_node_dict[node.node_id]['node']
+                    # if node.get_total_cost() < existing_node.get_total_cost():
+                    #     logger.debug(f'Worker {idx} found a better branch: {existing_node} -> {node}')
+                    #     existing_node.previous = best_node
+                    #     existing_node.cost_minutes = node.cost_minutes
+                    #     existing_node.total_cost = node.total_cost
+                    #     existing_node.geojson = node.geojson
                     continue  # Don't add to priority queue, already been seen
+
+                if node.node_id in self.closed_node_dict:
+                    self.closed_node_dict[node.node_id]['neighbours'].append(best_node.node_id)
+                else:
+                    self.closed_node_dict[node.node_id] = {'node': node, 'neighbours': [best_node.node_id]}
 
                 self.pq.put(node, block=False)
 
@@ -78,6 +83,9 @@ class AStarManager:
                 break
 
             node_count += 1
+
+            if not (node_count % 10000):
+                logger.debug(f'Worker {idx} has checked {node_count} nodes after {(time() - t0):.2f}s.')
 
         self.pg.put_connection(conn)
         return node_count
