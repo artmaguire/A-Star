@@ -7,3 +7,4 @@ class Flags(Enum):
     FOOT = 4
     RAIL = 8
     FERRY = 16
+    HGV = -1

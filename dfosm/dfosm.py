@@ -40,7 +40,9 @@ class DFOSM:
     def dijkstra(self, source_lat, source_lng, target_lat, target_lng, flag=Flags.CAR.value, visualisation=False,
                  history=False):
         weighter = WeighterFactory.create_weighter(flag)
-        node_options = NodeOptions(True, 0, weighter)
+        node_options = NodeOptions(False, 0, weighter)
+        flag = Flags.CAR.value if flag < 0 else flag
+
         return self.__a_star__(source_lat, source_lng, target_lat, target_lng, flag=flag, visualisation=visualisation,
                                history=history,
                                bidirectional=False,
@@ -49,7 +51,9 @@ class DFOSM:
     def bi_dijkstra(self, source_lat, source_lng, target_lat, target_lng, flag=Flags.CAR.value, visualisation=False,
                     history=False):
         weighter = WeighterFactory.create_weighter(flag)
-        node_options = NodeOptions(True, 0, weighter)
+        node_options = NodeOptions(False, 0, weighter)
+        flag = Flags.CAR.value if flag < 0 else flag
+
         return self.__a_star__(source_lat, source_lng, target_lat, target_lng, flag=flag, visualisation=visualisation,
                                history=history,
                                bidirectional=True,
@@ -59,6 +63,8 @@ class DFOSM:
                history=False):
         weighter = WeighterFactory.create_weighter(flag)
         node_options = NodeOptions(False, 0, weighter)
+        flag = Flags.CAR.value if flag < 0 else flag
+
         return self.__a_star__(source_lat, source_lng, target_lat, target_lng, flag=flag, visualisation=visualisation,
                                history=history,
                                bidirectional=False,
@@ -68,6 +74,8 @@ class DFOSM:
                   history=False):
         weighter = WeighterFactory.create_weighter(flag)
         node_options = NodeOptions(False, 0, weighter)
+        flag = Flags.CAR.value if flag < 0 else flag
+
         return self.__a_star__(source_lat, source_lng, target_lat, target_lng, flag=flag, visualisation=visualisation,
                                history=history,
                                bidirectional=True,

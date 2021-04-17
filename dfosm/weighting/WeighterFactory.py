@@ -1,5 +1,6 @@
 from .BikeWeighter import BikeWeighter
 from .CarWeighter import CarWeighter
+from .HGVWeighter import HGVWeighter
 from .WalkWeighter import WalkWeighter
 from ..utilities.constants import Flags
 
@@ -13,6 +14,8 @@ class WeighterFactory:
             weightor = BikeWeighter()
         elif flag == Flags.FOOT.value:
             weightor = WalkWeighter()
+        elif flag == Flags.HGV.value:
+            weightor = HGVWeighter()
         else:
             weightor = CarWeighter()
 
