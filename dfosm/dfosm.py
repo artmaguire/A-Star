@@ -84,9 +84,9 @@ class DFOSM:
     def __a_star__(self, source_lat, source_lng, target_lat, target_lng, flag=Flags.CAR.value, visualisation=False,
                    history=False,
                    bidirectional=True, node_options=NodeOptions()):
-        start_poi_lat, start_poi_lng, start_geom_id, start_on_vertix = \
+        start_poi_lat, start_poi_lng, start_edge_id, start_on_vertix = \
             self.pg.find_closest_point_on_edge(source_lng, source_lat, flag)
-        end_poi_lat, end_poi_lng, end_geom_id, end_on_vertix = \
+        end_poi_lat, end_poi_lng, end_edge_id, end_on_vertix = \
             self.pg.find_closest_point_on_edge(target_lng, target_lat, flag)
 
         node_options.starting_distance = get_distance(start_poi_lat, start_poi_lng, end_poi_lat, end_poi_lng)
@@ -95,20 +95,25 @@ class DFOSM:
         target_node = Node(lng=end_poi_lng, lat=end_poi_lat)
 
         if start_on_vertix:
-            start_nodes = self.pg.get_ways(Node(node_id=start_geom_id), target_node, flag, (start_geom_id,),
-                                           node_options, False)
+            start_nodes = [Node(node_id=start_edge_id)]
+            source_node_dict = {start_nodes[0].node_id: {'node': start_nodes[0], 'neighbours': [start_nodes[0].node_id]}}
         else:
-            start_nodes = self.pg.find_nearest_road(start_poi_lng, start_poi_lat, start_geom_id)
+            start_nodes = self.pg.find_nearest_road(start_poi_lng, start_poi_lat, start_edge_id)
+            source_node_dict = {
+                start_nodes[0].node_id: {'node': start_nodes[0], 'neighbours': [start_nodes[1].node_id]},
+                start_nodes[1].node_id: {'node': start_nodes[1], 'neighbours': [start_nodes[0].node_id]}
+            }
 
         if end_on_vertix:
-            end_nodes = self.pg.get_ways(Node(node_id=end_geom_id), source_node, flag, (end_geom_id,),
-                                         node_options, True)
+            end_nodes = [Node(node_id=end_edge_id)]
+            print(end_nodes)
+            target_node_dict = {end_nodes[0].node_id: {'node': end_nodes[0], 'neighbours': [end_nodes[0].node_id]}}
         else:
-            end_nodes = self.pg.find_nearest_road(end_poi_lng, end_poi_lat, end_geom_id)
-
-        source_node_dict = {node.node_id: node for node in start_nodes}
-
-        target_node_dict = {node.node_id: node for node in end_nodes}
+            end_nodes = self.pg.find_nearest_road(end_poi_lng, end_poi_lat, end_edge_id)
+            target_node_dict = {
+                end_nodes[0].node_id: {'node': end_nodes[0], 'neighbours': [end_nodes[1].node_id]},
+                end_nodes[1].node_id: {'node': end_nodes[1], 'neighbours': [end_nodes[0].node_id]}
+            }
 
         source_pq = PriorityQueue()
         for node in start_nodes:
@@ -145,7 +150,7 @@ class DFOSM:
                 notify_queue.put({})
                 return {
                     'error': {
-                        'code':    -1,
+                        'code': -1,
                         'message': 'Timeout when finding route'
                     }
                 }
@@ -168,13 +173,13 @@ class DFOSM:
         route = self._get_route_(best_node) + self._get_route_(middle_node)
 
         to_return = {
-            'route':        route,
+            'route': route,
             'source_point': {"lat": source_lat, "lng": source_lng},
             'target_point': {"lat": target_lat, "lng": target_lng},
-            'start_point':  {"lat": start_poi_lat, "lng": start_poi_lng},
-            'end_point':    {"lat": end_poi_lat, "lng": end_poi_lng},
-            'distance':     best_node.get_total_distance() + middle_node.get_total_distance(),
-            'time':         best_node.cost_minutes + middle_node.cost_minutes,
+            'start_point': {"lat": start_poi_lat, "lng": start_poi_lng},
+            'end_point': {"lat": end_poi_lat, "lng": end_poi_lng},
+            'distance': best_node.get_total_distance() + middle_node.get_total_distance(),
+            'time': best_node.cost_minutes + middle_node.cost_minutes,
         }
 
         if history:
@@ -221,15 +226,15 @@ class DFOSM:
         t0 = time()
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [executor.submit(
-                    all_roads_worker, self.pg, pq, end_nodes_pq, source_node_dict, source_node, flag, history_list,
-                    node_options, 32) for _ in range(self.threads)]
+                all_roads_worker, self.pg, pq, end_nodes_pq, source_node_dict, source_node, flag, history_list,
+                node_options, 32) for _ in range(self.threads)]
             try:
                 node_count = sum(f.result() for f in futures)
             except concurrent.futures.TimeoutError:
                 logger.error(f'Timeout occurred when trying to calculate route with {self.threads} threads.')
                 return {
                     'error': {
-                        'code':    -1,
+                        'code': -1,
                         'message': 'Timeout when finding route'
                     }
                 }
@@ -238,7 +243,7 @@ class DFOSM:
         logger.info(f'A-Star workers time: {round(t1 - t0, 3)}s')
 
         to_return = {'start_point': {"lat": start_poi_lat, "lng": start_poi_lng}, 'branch': self._get_visualisation_(
-                end_nodes_pq)}
+            end_nodes_pq)}
 
         all_roads_geojson = {"type": "FeatureCollection", "features": []}
 
@@ -272,10 +277,10 @@ class DFOSM:
             if pq.empty():
                 break
             best_branch_node = pq.get()
-            branch = {'cost':       best_branch_node.cost,
-                      'distance':   best_branch_node.distance,
+            branch = {'cost': best_branch_node.cost,
+                      'distance': best_branch_node.distance,
                       'total_cost': best_branch_node.calculate_total_cost(),
-                      'route':      self._get_route_(best_branch_node)}
+                      'route': self._get_route_(best_branch_node)}
             branch_routes.append(branch)
 
         return branch_routes
