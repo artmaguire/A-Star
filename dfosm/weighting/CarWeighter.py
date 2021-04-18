@@ -15,7 +15,10 @@ class CarWeighter(Weighter):
         # Start
         if node.cost_minutes < 8:
             if node.clazz < 30 or node.clazz == 43:
-                cost /= 3
+                if node.kmh >= 100:
+                    cost /= 3
+                else:
+                    cost *= 1
             else:
                 cost *= 3
         # End
@@ -68,7 +71,10 @@ class CarWeighter(Weighter):
         # Start
         if node.cost_minutes < 8:
             if node.clazz < 30 or node.clazz == 43:
-                delta /= 3
+                if node.kmh >= 100:
+                    delta /= 3
+                else:
+                    delta *= 1
             else:
                 delta *= 3
         # End
