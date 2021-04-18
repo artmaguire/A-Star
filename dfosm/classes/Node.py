@@ -15,11 +15,11 @@ class Node:
         self.geojson = geojson
         self.node_options = node_options
         self.initial_cost = initial_cost
+        self.cost_minutes = self.initial_cost + self.previous.cost_minutes if self.previous else 0
 
         self.cost = self.cost_modifier()
         self.distance_minutes = self.distance_modifier()
 
-        self.cost_minutes = self.initial_cost + self.previous.cost_minutes if self.previous else 0
         self.total_cost = self.calculate_total_cost() + self.previous.total_cost if self.previous else 0
 
         self.visited = False
