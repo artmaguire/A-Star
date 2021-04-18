@@ -6,6 +6,7 @@ install:
   - poetry install
 script:
   - poetry build
+  - pytest ./tests/test_known_routes.py
 before_deploy:
   - export RELEASE_WHL_FILE=$(ls dist/*.whl)
   - echo "deploying $RELEASE_WHL_FILE to GitHub releases"
