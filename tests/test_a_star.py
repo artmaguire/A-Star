@@ -5,7 +5,7 @@ from .config import conf
 target = __import__("dfosm")
 
 logger = logging.getLogger(target.__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 class TestAStar:
@@ -24,7 +24,7 @@ class TestAStar:
         # Lighthouse to Doonbeg
         # geojson = self.dfosm.a_star(52.614722,-9.776111,52.5595239,-9.9381113, visualisation=False)
         # Ard na Greine
-        geojson = self.dfosm.dijkstra(52.614722, -9.776111, 52.5595239, -9.9381113, target.Flags.BIKE.value,
+        geojson = self.dfosm.dijkstra(52.614722, -9.776111, 52.8435152, -8.983747, target.Flags.CAR.value,
                                       history=False)
         # Tullig to Ballylongford
         # geojson = self.dfosm.a_star(281360, 918311)

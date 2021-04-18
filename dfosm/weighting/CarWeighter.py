@@ -13,7 +13,7 @@ class CarWeighter(Weighter):
             return cost / 10
 
         # Start
-        if node.cost_minutes < 8 and node.clazz > 14:
+        if node.cost_minutes < 8:
             if node.clazz < 30 or node.clazz == 43:
                 cost /= 3
             else:
@@ -51,10 +51,6 @@ class CarWeighter(Weighter):
             else:
                 cost *= 5
 
-        # if cost == 0.014238:
-        #     print(node.node_id)
-        #     pass
-
         return cost
 
     def distance_modifier(self, node: Node):
@@ -70,11 +66,13 @@ class CarWeighter(Weighter):
             return 0
 
         # Start
-        # if node.cost_minutes < 8:
-        #     if node.clazz < 30 or node.clazz == 43:
-        #         delta /= 3
+        if node.cost_minutes < 8:
+            if node.clazz < 30 or node.clazz == 43:
+                delta /= 3
+            else:
+                delta *= 3
         # End
-        elif node.distance < 5:
+        elif node.distance < 8:
             if node.clazz < 30 or node.clazz == 43:
                 delta /= 3
             else:

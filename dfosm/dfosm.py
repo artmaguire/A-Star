@@ -36,12 +36,12 @@ class DFOSM:
 
     def close_database(self):
         self.pg.put_connection()
+        self.pg.close_all_connections()
 
     def dijkstra(self, source_lat, source_lng, target_lat, target_lng, flag=Flags.CAR.value, visualisation=False,
                  history=False):
-        weighter = WeighterFactory.create_weighter(flag)
-        node_options = NodeOptions(False, 0, weighter)
         flag = Flags.CAR.value if flag < 0 else flag
+        node_options = NodeOptions(dijkstra=True)
 
         return self.__a_star__(source_lat, source_lng, target_lat, target_lng, flag=flag, visualisation=visualisation,
                                history=history,
@@ -50,9 +50,8 @@ class DFOSM:
 
     def bi_dijkstra(self, source_lat, source_lng, target_lat, target_lng, flag=Flags.CAR.value, visualisation=False,
                     history=False):
-        weighter = WeighterFactory.create_weighter(flag)
-        node_options = NodeOptions(False, 0, weighter)
         flag = Flags.CAR.value if flag < 0 else flag
+        node_options = NodeOptions(dijkstra=True)
 
         return self.__a_star__(source_lat, source_lng, target_lat, target_lng, flag=flag, visualisation=visualisation,
                                history=history,
@@ -61,9 +60,9 @@ class DFOSM:
 
     def a_star(self, source_lat, source_lng, target_lat, target_lng, flag=Flags.CAR.value, visualisation=False,
                history=False):
-        weighter = WeighterFactory.create_weighter(flag)
-        node_options = NodeOptions(False, 0, weighter)
         flag = Flags.CAR.value if flag < 0 else flag
+        weighter = WeighterFactory.create_weighter(flag)
+        node_options = NodeOptions(weighter=weighter)
 
         return self.__a_star__(source_lat, source_lng, target_lat, target_lng, flag=flag, visualisation=visualisation,
                                history=history,
@@ -72,9 +71,9 @@ class DFOSM:
 
     def bi_a_star(self, source_lat, source_lng, target_lat, target_lng, flag=Flags.CAR.value, visualisation=False,
                   history=False):
-        weighter = WeighterFactory.create_weighter(flag)
-        node_options = NodeOptions(False, 0, weighter)
         flag = Flags.CAR.value if flag < 0 else flag
+        weighter = WeighterFactory.create_weighter(flag)
+        node_options = NodeOptions(weighter=weighter)
 
         return self.__a_star__(source_lat, source_lng, target_lat, target_lng, flag=flag, visualisation=visualisation,
                                history=history,
@@ -106,7 +105,6 @@ class DFOSM:
 
         if end_on_vertix:
             end_nodes = [Node(node_id=end_edge_id)]
-            print(end_nodes)
             target_node_dict = {end_nodes[0].node_id: {'node': end_nodes[0], 'neighbours': [end_nodes[0].node_id]}}
         else:
             end_nodes = self.pg.find_nearest_road(end_poi_lng, end_poi_lat, end_edge_id)
@@ -129,10 +127,10 @@ class DFOSM:
             [node.serialize() for node in start_nodes] + [node.serialize() for node in end_nodes]] if history else None
 
         source_threads = math.ceil(self.threads / 2) if bidirectional else self.threads
-        source_manager = AStarManager(self.pg, source_pq, notify_queue, source_node_dict,
+        source_manager = AStarManager('S', self.pg, source_pq, notify_queue, source_node_dict,
                                       target_node_dict, target_node, flag, history_list,
                                       source_threads, node_options)
-        target_manager = AStarManager(self.pg, target_pq, notify_queue, target_node_dict,
+        target_manager = AStarManager('T', self.pg, target_pq, notify_queue, target_node_dict,
                                       source_node_dict, source_node, flag, history_list,
                                       self.threads - source_threads, node_options, reverse_direction=True)
 
@@ -143,7 +141,6 @@ class DFOSM:
             source_future = executor.submit(source_manager.run)
             target_future = executor.submit(target_manager.run)
             try:
-                logger.error(self.timeout)
                 node_count = source_future.result(timeout=self.timeout) + target_future.result(timeout=self.timeout)
             except concurrent.futures.TimeoutError:
                 logger.error(f'Timeout occurred when trying to calculate route with {self.threads} threads.')
@@ -162,7 +159,8 @@ class DFOSM:
             r = notify_queue.get()
             if not result:
                 result = r
-            if r[0].cost_minutes + r[1].cost_minutes < result[0].cost_minutes + result[1].cost_minutes:
+            if r[0].get_cost_minutes() + r[1].get_cost_minutes() < result[0].get_cost_minutes() +\
+                    result[1].get_cost_minutes():
                 result = r
 
         best_node = result[0]
@@ -179,7 +177,7 @@ class DFOSM:
             'start_point': {"lat": start_poi_lat, "lng": start_poi_lng},
             'end_point': {"lat": end_poi_lat, "lng": end_poi_lng},
             'distance': best_node.get_total_distance() + middle_node.get_total_distance(),
-            'time': best_node.cost_minutes + middle_node.cost_minutes,
+            'time': best_node.get_cost_minutes() + middle_node.get_cost_minutes(),
         }
 
         if history:
@@ -193,7 +191,7 @@ class DFOSM:
         logger.info(f'Total Nodes Searched: {node_count}')
         logger.info(f'Nodes In Route: {len(route)}')
         logger.info(f'Estimated distance: {best_node.get_total_distance() + middle_node.get_total_distance():.2f}km')
-        logger.info(f'Estimated Time: {best_node.cost_minutes + middle_node.cost_minutes:.2f}m')
+        logger.info(f'Estimated Time: {best_node.get_cost_minutes() + middle_node.get_cost_minutes():.2f}m')
 
         return to_return
 
