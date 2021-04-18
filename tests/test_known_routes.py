@@ -38,7 +38,7 @@ class TestKnownRoutes:
     def teardown_method(self):
         self.dfosm.close_database()
 
-    @pytest.mark.parametrize('known_route', known_routes_short)
+    @pytest.mark.parametrize('known_route', known_routes_short + known_routes_long)
     def test_dijkstra(self, known_route):
         logger.info(
             f'Testing dijkstra between {known_route["start_name"]} and {known_route["end_name"]}. '
@@ -50,7 +50,7 @@ class TestKnownRoutes:
         assert result['time'] <= known_route['target_time']
         assert result['distance'] <= known_route['target_distance']
 
-    @pytest.mark.parametrize('known_route', known_routes_short)
+    @pytest.mark.parametrize('known_route', known_routes_short + known_routes_long)
     def test_bi_dijkstra(self, known_route):
         logger.info(
             f'Testing bi-dijkstra between {known_route["start_name"]} and {known_route["end_name"]}. '

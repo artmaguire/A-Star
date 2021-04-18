@@ -19,7 +19,8 @@ class Node:
         self.cost = self.cost_modifier()
         self.distance_minutes = self.distance_modifier()
 
-        self.total_cost = self.calculate_total_cost()
+        self.cost_minutes = self.initial_cost + self.previous.cost_minutes if self.previous else 0
+        self.total_cost = self.calculate_total_cost() + self.previous.total_cost if self.previous else 0
 
         self.visited = False
 
@@ -47,11 +48,11 @@ class Node:
 
         return self.km + self.previous.get_total_distance()
 
-    def get_total_cost(self):
-        if not self.previous:
-            return self.calculate_total_cost()
-
-        return self.calculate_total_cost() + self.previous.get_total_cost()
+    # def get_total_cost(self):
+    #     if not self.previous:
+    #         return self.calculate_total_cost()
+    #
+    #     return self.calculate_total_cost() + self.previous.get_total_cost()
 
     def calculate_total_cost(self):
         return self.cost + self.distance_minutes
@@ -75,8 +76,8 @@ class Node:
             'clazz':            self.clazz,
             'initial_cost':     self.initial_cost,
             'cost':             self.cost,
-            'total_cost':       self.get_total_cost(),
-            'cost_minutes':     self.get_cost_minutes(),
+            'total_cost':       self.total_cost,
+            'cost_minutes':     self.cost_minutes,
             'km':               self.km,
             'kmh':              self.kmh,
             'distance':         self.distance,
@@ -85,13 +86,25 @@ class Node:
         }
         return d
 
+    def update(self, node):
+        self.clazz = node.clazz
+        self.km = node.km
+        self.kmh = node.kmh
+        self.previous = node.previous
+        self.geojson = node.geojson
+        self.initial_cost = node.initial_cost
+        self.cost = node.cost
+        self.distance_minutes = node.distance_minutes
+        self.cost_minutes = node.cost_minutes
+        self.total_cost = node.total_cost
+
     def __str__(self) -> str:
         d = self.serialize()
         del d['geojson']
         return str(d)
 
     def __lt__(self, other):
-        return self.get_total_cost() < other.get_total_cost()
+        return self.total_cost < other.total_cost
 
 
 def __eq__(self, other):

@@ -127,10 +127,10 @@ class DFOSM:
             [node.serialize() for node in start_nodes] + [node.serialize() for node in end_nodes]] if history else None
 
         source_threads = math.ceil(self.threads / 2) if bidirectional else self.threads
-        source_manager = AStarManager(self.pg, source_pq, notify_queue, source_node_dict,
+        source_manager = AStarManager('S', self.pg, source_pq, notify_queue, source_node_dict,
                                       target_node_dict, target_node, flag, history_list,
                                       source_threads, node_options)
-        target_manager = AStarManager(self.pg, target_pq, notify_queue, target_node_dict,
+        target_manager = AStarManager('T', self.pg, target_pq, notify_queue, target_node_dict,
                                       source_node_dict, source_node, flag, history_list,
                                       self.threads - source_threads, node_options, reverse_direction=True)
 
