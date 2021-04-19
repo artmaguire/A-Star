@@ -37,16 +37,13 @@ class Node:
         return self.node_options.weighter.distance_modifier(self)
 
     def get_cost_minutes(self):
-        if not self.previous:
-            return self.initial_cost
+        return self.cost_minutes
 
-        return self.initial_cost + self.previous.get_cost_minutes()
-
-    def get_total_distance(self):
-        if not self.previous:
-            return self.km
-
-        return self.km + self.previous.get_total_distance()
+    # def get_total_distance(self):
+    #     if not self.previous:
+    #         return self.km
+    #
+    #     return self.km + self.previous.get_total_distance()
 
     # def get_total_cost(self):
     #     if not self.previous:

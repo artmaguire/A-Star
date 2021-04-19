@@ -170,14 +170,24 @@ class DFOSM:
 
         route = self._get_route_(best_node) + self._get_route_(middle_node)
 
+        total_distance = 0
+        dnode = best_node
+        while dnode:
+            total_distance += dnode.km
+            dnode = dnode.previous
+        dnode = middle_node
+        while dnode:
+            total_distance += dnode.km
+            dnode = dnode.previous
+
         to_return = {
             'route': route,
             'source_point': {"lat": source_lat, "lng": source_lng},
             'target_point': {"lat": target_lat, "lng": target_lng},
-            'start_point': {"lat": start_poi_lat, "lng": start_poi_lng},
-            'end_point': {"lat": end_poi_lat, "lng": end_poi_lng},
-            'distance': best_node.get_total_distance() + middle_node.get_total_distance(),
-            'time': best_node.get_cost_minutes() + middle_node.get_cost_minutes(),
+            'start_point':  {"lat": start_poi_lat, "lng": start_poi_lng},
+            'end_point':    {"lat": end_poi_lat, "lng": end_poi_lng},
+            'distance':     total_distance,
+            'time':         best_node.get_cost_minutes() + middle_node.get_cost_minutes(),
         }
 
         if history:
@@ -190,7 +200,7 @@ class DFOSM:
         logger.info('******************************************************')
         logger.info(f'Total Nodes Searched: {node_count}')
         logger.info(f'Nodes In Route: {len(route)}')
-        logger.info(f'Estimated distance: {best_node.get_total_distance() + middle_node.get_total_distance():.2f}km')
+        logger.info(f'Estimated distance: {total_distance:.2f}km')
         logger.info(f'Estimated Time: {best_node.get_cost_minutes() + middle_node.get_cost_minutes():.2f}m')
 
         return to_return
